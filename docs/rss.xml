@@ -3,8 +3,8 @@
 <channel>
 <title><![CDATA[Cogito, ergo sum]]></title>
 <description><![CDATA[Cogito, ergo sum]]></description>
-<link>https://github.com/lafirest/lafirest/html/</link>
-<lastBuildDate>Mon, 05 Jul 2021 01:27:13 +0800</lastBuildDate>
+<link>https://github.com/lafirest/lafirest/docs/</link>
+<lastBuildDate>Mon, 05 Jul 2021 01:41:52 +0800</lastBuildDate>
 <item>
   <title><![CDATA[关于消息路由表实现的思考]]></title>
   <description><![CDATA[
@@ -252,8 +252,46 @@
 <div class="taglist"><a href="https://github.com/lafirest/lafirest/html/tags.html">Tags</a>: <a href="https://github.com/lafirest/lafirest/html/tag-字典树.html">字典树</a> <a href="https://github.com/lafirest/lafirest/html/tag-路由表.html">路由表</a> </div>]]></description>
   <category><![CDATA[字典树]]></category>
   <category><![CDATA[路由表]]></category>
-  <link>https://github.com/lafirest/lafirest/html/topic_tree.html</link>
-  <pubDate>Mon, 05 Jul 2021 01:27:13 +0800</pubDate>
+  <link>https://github.com/lafirest/lafirest/docs/topic_tree.html</link>
+  <pubDate>Mon, 05 Jul 2021 01:41:52 +0800</pubDate>
+</item>
+<item>
+  <title><![CDATA[使用Common Lisp理解Monad]]></title>
+  <description><![CDATA[
+<nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org7a371ee">1. 先挖坑</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org7a371ee" class="outline-2">
+<h2 id="org7a371ee"><span class="section-number-2">1.</span> 先挖坑</h2>
+</div>
+<div class="taglist"></div>]]></description>
+  <link>https://github.com/lafirest/lafirest/docs/monad_in_lisp.html</link>
+  <pubDate>Mon, 05 Jul 2021 01:41:52 +0800</pubDate>
+</item>
+<item>
+  <title><![CDATA[C#的async/await和mona]]></title>
+  <description><![CDATA[
+<nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org38df7d7">1. 挖坑</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org38df7d7" class="outline-2">
+<h2 id="org38df7d7"><span class="section-number-2">1.</span> 挖坑</h2>
+</div>
+<div class="taglist"></div>]]></description>
+  <link>https://github.com/lafirest/lafirest/docs/csharp_moand.html</link>
+  <pubDate>Mon, 05 Jul 2021 01:41:52 +0800</pubDate>
 </item>
 </channel>
 </rss>
