@@ -15,20 +15,20 @@
 <body>
 <div id="preamble" class="status"></div>
 <div id="content">
-<div class="post-date">05 Jul 2021</div><h1 class="post-title"><a href="https://lafirest.github.io/topic_tree.html">关于消息路由表实现的思考</a></h1>
+<div class="post-date">12 Jul 2021</div><h1 class="post-title"><a href="https://lafirest.github.io/topic_tree.html">关于消息路由表实现的思考</a></h1>
 <nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org389c5c9">1. 根和叶</a></li>
-<li><a href="#orgb757141">2. 也许我们不太合适?</a></li>
-<li><a href="#org5854c65">3. 还可以挽回么?</a>
+<li><a href="#orgbfb1d8b">1. 根和叶</a></li>
+<li><a href="#org2b4130e">2. 也许我们不太合适?</a></li>
+<li><a href="#org78f83ca">3. 还可以挽回么?</a>
 <ul>
-<li><a href="#orgc4a84de">3.1. 自动机</a></li>
-<li><a href="#org3ed4197">3.2. 平坦化结构</a></li>
-<li><a href="#org838e79b">3.3. 平衡树+映射表</a>
+<li><a href="#org2cd91fc">3.1. 自动机</a></li>
+<li><a href="#org79dc008">3.2. 平坦化结构</a></li>
+<li><a href="#orgd1667af">3.3. 平衡树+映射表</a>
 <ul>
-<li><a href="#org54857d6">3.3.1. 应用说明</a></li>
+<li><a href="#org59a3fba">3.3.1. 应用说明</a></li>
 </ul>
 </li>
 </ul>
@@ -37,8 +37,8 @@
 </div>
 </nav>
 
-<div id="outline-container-org389c5c9" class="outline-2">
-<h2 id="org389c5c9"><span class="section-number-2">1.</span> 根和叶</h2>
+<div id="outline-container-orgbfb1d8b" class="outline-2">
+<h2 id="orgbfb1d8b"><span class="section-number-2">1.</span> 根和叶</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 消息队列、文件系统、网络路由等场景经常需要处理路由信息，一般都是由路径节点名和分隔符做成,比如:<br>
@@ -54,8 +54,8 @@
 </div>
 </div>
 
-<div id="outline-container-orgb757141" class="outline-2">
-<h2 id="orgb757141"><span class="section-number-2">2.</span> 也许我们不太合适?</h2>
+<div id="outline-container-org2b4130e" class="outline-2">
+<h2 id="org2b4130e"><span class="section-number-2">2.</span> 也许我们不太合适?</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 但我总感觉这种结构实现为字典树并不太好，路由信息和字典树应用对象有些很明显的不同:<br>
@@ -79,12 +79,12 @@
 </div>
 </div>
 
-<div id="outline-container-org5854c65" class="outline-2">
-<h2 id="org5854c65"><span class="section-number-2">3.</span> 还可以挽回么?</h2>
+<div id="outline-container-org78f83ca" class="outline-2">
+<h2 id="org78f83ca"><span class="section-number-2">3.</span> 还可以挽回么?</h2>
 <div class="outline-text-2" id="text-3">
 </div>
-<div id="outline-container-orgc4a84de" class="outline-3">
-<h3 id="orgc4a84de"><span class="section-number-3">3.1.</span> 自动机</h3>
+<div id="outline-container-org2cd91fc" class="outline-3">
+<h3 id="org2cd91fc"><span class="section-number-3">3.1.</span> 自动机</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 自动机应该可以实现路由结构，而且搜索性能可能比上面的字典树实现都要快，但内存耗用也应该更加夸张，暂时不考虑
@@ -92,8 +92,8 @@
 </div>
 </div>
 
-<div id="outline-container-org3ed4197" class="outline-3">
-<h3 id="org3ed4197"><span class="section-number-3">3.2.</span> 平坦化结构</h3>
+<div id="outline-container-org79dc008" class="outline-3">
+<h3 id="org79dc008"><span class="section-number-3">3.2.</span> 平坦化结构</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 这种方法实现逻辑如下:
@@ -207,8 +207,8 @@
 </div>
 </div>
 
-<div id="outline-container-org838e79b" class="outline-3">
-<h3 id="org838e79b"><span class="section-number-3">3.3.</span> 平衡树+映射表</h3>
+<div id="outline-container-orgd1667af" class="outline-3">
+<h3 id="orgd1667af"><span class="section-number-3">3.3.</span> 平衡树+映射表</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 这种实现的逻辑如下:
@@ -220,16 +220,16 @@
 <li>不同的路径比较时，从根节点依次进行比较，兄弟节点以单词大小进行比较(为了加速比较，可以对字典
 进行预先哈希，比较时就直接比较哈希值，不过哈希算法需要保证顺序映射不会颠倒)</li>
 </ol></li>
-<li>引入一个映射表，类似<a href="#org3ed4197">3.2</a>里面的思路，存储从 <b>根节点</b> &rarr; <b>某个子节点</b> 的 <b>路径</b> &rarr; <b>该节点</b> 的映射</li>
+<li>引入一个映射表，类似<a href="#org79dc008">3.2</a>里面的思路，存储从 <b>根节点</b> &rarr; <b>某个子节点</b> 的 <b>路径</b> &rarr; <b>该节点</b> 的映射</li>
 </ol>
 </div>
 
-<div id="outline-container-org54857d6" class="outline-4">
-<h4 id="org54857d6"><span class="section-number-4">3.3.1.</span> 应用说明</h4>
+<div id="outline-container-org59a3fba" class="outline-4">
+<h4 id="org59a3fba"><span class="section-number-4">3.3.1.</span> 应用说明</h4>
 <div class="outline-text-4" id="text-3-3-1">
 </div>
 <ol class="org-ol">
-<li><a id="orgbe0fb6d"></a>直接搜索某个路径<br>
+<li><a id="org41d01df"></a>直接搜索某个路径<br>
 <div class="outline-text-5" id="text-3-3-1-1">
 <p>
 例子: /i/am/some/topic<br>
@@ -238,7 +238,7 @@
 </div>
 </li>
 
-<li><a id="org0535097"></a>搜索子树<br>
+<li><a id="orgd09bfa3"></a>搜索子树<br>
 <div class="outline-text-5" id="text-3-3-1-2">
 <p>
 例子: /i/am/+/topic/what<br>

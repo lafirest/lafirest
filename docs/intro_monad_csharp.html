@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://lafirest.github.io/rss.xml"
+      title="RSS feed for https://lafirest.github.io/">
+<title>通过C#理解Monad</title>
+<meta name="author" content="firest">
+<meta name="referrer" content="no-referrer">
+<link href= "static/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"></div>
+<div id="content">
+<div class="post-date">12 Jul 2021</div><h1 class="post-title"><a href="https://lafirest.github.io/intro_monad_csharp.html">通过C#理解Monad</a></h1>
+<nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org4ab1b8d">1. 关于什么是Monad</a></li>
+<li><a href="#orgabee10d">2. 计算表达式</a>
+<ul>
+<li><a href="#orgd231134">2.1. 对 &gamma; 的扩展</a></li>
+</ul>
+</li>
+<li><a href="#org348132e">3. 回到Monad</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-org4ab1b8d" class="outline-2">
+<h2 id="org4ab1b8d"><span class="section-number-2">1.</span> 关于什么是Monad</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+讲解Monad是什么的文章很多，但是基本上都是以范畴论的概念来展开说明的,这导致了理解成本特别高<br>
+从一个小坑掉入了一个大坑<br>
+这里不谈理论，将通过下面的C#(伪)代码来说明什么是Monad，所以其实并不严谨<br>
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #F0DFAF; font-weight: bold;">delegate</span> <span style="color: #7CB8BB;">Gold</span> <span style="color: #93E0E3;">F</span><span style="color: #DCDCCC;">(</span><span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">x</span><span style="color: #DCDCCC;">)</span>;
+<span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #F0DFAF; font-weight: bold;">class</span> <span style="color: #7CB8BB;">Gold</span>
+<span style="color: #DCDCCC;">{</span>
+    <span style="color: #F0DFAF; font-weight: bold;">private</span> <span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">gold</span>;
+
+    <span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #93E0E3;">Gold</span><span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">x</span><span style="color: #BFEBBF;">)</span> =&gt; gold = x;
+
+    <span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #F0DFAF; font-weight: bold;">static</span> <span style="color: #7CB8BB;">Gold</span> <span style="color: #F0DFAF; font-weight: bold;">operator</span> + <span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">F</span> <span style="color: #DFAF8F;">f</span><span style="color: #BFEBBF;">)</span> =&gt; <span style="color: #93E0E3;">f</span><span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">gold</span><span style="color: #BFEBBF;">)</span>;
+
+    <span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #F0DFAF; font-weight: bold;">static</span> <span style="color: #7CB8BB;">Gold</span> <span style="color: #93E0E3;">Double</span><span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">x</span><span style="color: #BFEBBF;">)</span> =&gt; <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">Gold</span><span style="color: #BFEBBF;">(</span>x * 2<span style="color: #BFEBBF;">)</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #F0DFAF; font-weight: bold;">static</span> <span style="color: #7CB8BB;">Gold</span> <span style="color: #93E0E3;">Zero</span><span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">int</span> <span style="color: #DFAF8F;">x</span><span style="color: #BFEBBF;">)</span> =&gt; <span style="color: #F0DFAF; font-weight: bold;">new</span> <span style="color: #7CB8BB;">Gold</span><span style="color: #BFEBBF;">(</span>0<span style="color: #BFEBBF;">)</span>;
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgabee10d" class="outline-2">
+<h2 id="orgabee10d"><span class="section-number-2">2.</span> 计算表达式</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+微软在设计F#时，为了避免使用Monad这个单词，发明了「计算表达式」这个概念，这个概念其实很好的反映了Monad的本质<br>
+先来看个小学级别的计算式子: &alpha; = 1 + 2 + 3 + 4 + 5<br>
+然后我们把里面的数字全部换成Gold类型，得到: &beta; = Gold + Gold + Gold + Gold + Gold<br>
+但是上面我们并没有实现Gold + Gold, 而是实现了Gold + F, 不过 Gold + F -&gt; Gold, 所以我们可以将 &beta; 里面的Gold替换为Gold + F,<br>
+从而得到: &gamma; = (((Gold + F) + F) + F) + F<br>
+</p>
+</div>
+
+<div id="outline-container-orgd231134" class="outline-3">
+<h3 id="orgd231134"><span class="section-number-3">2.1.</span> 对 &gamma; 的扩展</h3>
+<div class="outline-text-3" id="text-2-1">
+<ol class="org-ol">
+<li>首先我们能看到，在上面的代码中，F可以是「Double」也可以是「Zero」,也就是这个表达式并不关心执行的具体流程，只要该流程满足F的声明即可<br></li>
+<li>其次我们将表达式中的Gold 换成 Diamond、HP、MP，并不影响 &gamma; 这个表达式的运算，也就是说这个表达式并不关心作用对象的类型<br></li>
+<li>最后，我们可以发现 &gamma; 这个表达式并不关心Gold 里面是int gold还是long gold,或者string gold, 也就是说这个表达式并不关心对象的内部环境<br></li>
+</ol>
+
+<p>
+总结:<br>
+</p>
+<ul class="org-ul">
+<li>我们将1中的执行流程用F表示<br></li>
+<li>2中提到的对象用M表示<br></li>
+<li>3中提到的对象内部环境用a表示<br></li>
+</ul>
+<p>
+那么得到新的表达式: &delta; = ((((M a) + F) + F) + F)<br>
+其中: F = a -&gt; M a<br>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org348132e" class="outline-2">
+<h2 id="org348132e"><span class="section-number-2">3.</span> 回到Monad</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+上面的公式 &delta; 其实和Haskell中的Monad很类似了，Monad可以看作是对公式 &delta; 这一类运算的抽象<br>
+从cshap的角度理解, Monad可以看作是一个接口或者抽象类, (伪)代码如下:<br>
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #F0DFAF; font-weight: bold;">public</span> <span style="color: #F0DFAF; font-weight: bold;">interface</span> <span style="color: #7CB8BB;">Monad</span><span style="color: #DCDCCC;">&lt;</span><span style="color: #7CB8BB;">T</span><span style="color: #BFEBBF;">&lt;</span><span style="color: #7CB8BB;">U</span><span style="color: #BFEBBF;">&gt;</span><span style="color: #DCDCCC;">&gt;</span>
+<span style="color: #DCDCCC;">{</span>
+    <span style="color: #7CB8BB;">Monad</span><span style="color: #BFEBBF;">&lt;</span><span style="color: #7CB8BB;">T</span><span style="color: #D0BF8F;">&lt;</span><span style="color: #7CB8BB;">U</span><span style="color: #D0BF8F;">&gt;</span><span style="color: #BFEBBF;">&gt;</span> <span style="color: #93E0E3;">Return</span><span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">U</span> <span style="color: #DFAF8F;">a</span><span style="color: #BFEBBF;">)</span>;
+    <span style="color: #F0DFAF; font-weight: bold;">static</span> <span style="color: #7CB8BB;">Monad</span><span style="color: #BFEBBF;">&lt;</span><span style="color: #7CB8BB;">T</span><span style="color: #D0BF8F;">&lt;</span><span style="color: #7CB8BB;">U</span><span style="color: #D0BF8F;">&gt;</span><span style="color: #BFEBBF;">&gt;</span> <span style="color: #93E0E3;">Bind</span> <span style="color: #BFEBBF;">(</span><span style="color: #7CB8BB;">Monad</span><span style="color: #D0BF8F;">&lt;</span><span style="color: #7CB8BB;">T</span><span style="color: #93E0E3;">&lt;</span><span style="color: #7CB8BB;">U</span><span style="color: #93E0E3;">&gt;</span><span style="color: #D0BF8F;">&gt;</span> <span style="color: #DFAF8F;">m</span>, Func&lt;U, Monad&lt;T&lt;U&gt;&gt;&gt; f<span style="color: #BFEBBF;">)</span>
+<span style="color: #DCDCCC;">}</span>
+
+</pre>
+</div>
+<p>
+其中:<br>
+</p>
+<ul class="org-ul">
+<li>U是被包裹的类,比如Gold里面的gold的类型int<br></li>
+<li>其次T是外层的包裹类，比如Gold<br></li>
+<li>然后「Return」用于将一个被包裹的类提升为一个Monad的类<br></li>
+<li>然后 「Bind」则是 &delta; 中的 「+」一个二元运算<br></li>
+</ul>
+<p>
+这些基本上也是Haskell中实现一个Monad需要完成的"接口"实现(当然上面的代码在C#里面是没法运行的,C#只能有限的模拟Haskell中的moand)<br>
+也就是说只要有类和该类的行为，满足或者说实现这个接口，这个类就可以被看作是一个Monad<br>
+所以，抛开理论上的定义，对Monad的使用可以看作是通过二元运算，串联起来的一连串的运算，而不同的二元运算可以实现不同的逻辑，从而达到对运行流程的控制、对副作用的管理等功能<br>
+</p>
+</div>
+</div>
+<div class="taglist"><a href="https://lafirest.github.io/tags.html">Tags</a>: <a href="https://lafirest.github.io/tag-monad.html">Monad</a> </div></div>
+<div id="postamble" class="status"></div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+#+TITLE: 通过C#理解Monad
+#+FILETAGS: Monad
+#+OPTIONS: \n:t
+
+* 关于什么是Monad
+  讲解Monad是什么的文章很多，但是基本上都是以范畴论的概念来展开说明的,这导致了理解成本特别高
+  从一个小坑掉入了一个大坑
+  这里不谈理论，将通过下面的C#(伪)代码来说明什么是Monad，所以其实并不严谨
+  #+BEGIN_SRC csharp
+    public delegate Gold F(int x);
+	public class Gold
+	{
+		private int gold;
+
+		public Gold(int x) => gold = x;
+
+		public static Gold operator + (F f) => f(gold);
+
+		public static Gold Double(int x) => new Gold(x * 2);
+		public static Gold Zero(int x) => new Gold(0);
+	}
+  #+END_SRC
+
+* 计算表达式
+  微软在设计F#时，为了避免使用Monad这个单词，发明了「计算表达式」这个概念，这个概念其实很好的反映了Monad的本质
+  先来看个小学级别的计算式子: \alpha = 1 + 2 + 3 + 4 + 5
+  然后我们把里面的数字全部换成Gold类型，得到: \beta = Gold + Gold + Gold + Gold + Gold
+  但是上面我们并没有实现Gold + Gold, 而是实现了Gold + F, 不过 Gold + F -> Gold, 所以我们可以将 \beta 里面的Gold替换为Gold + F,
+  从而得到: \gamma = (((Gold + F) + F) + F) + F
+
+** 对 \gamma 的扩展
+   1. 首先我们能看到，在上面的代码中，F可以是「Double」也可以是「Zero」,也就是这个表达式并不关心执行的具体流程，只要该流程满足F的声明即可
+   2. 其次我们将表达式中的Gold 换成 Diamond、HP、MP，并不影响 \gamma 这个表达式的运算，也就是说这个表达式并不关心作用对象的类型
+   3. 最后，我们可以发现 \gamma 这个表达式并不关心Gold 里面是int gold还是long gold,或者string gold, 也就是说这个表达式并不关心对象的内部环境
+
+  总结:
+  * 我们将1中的执行流程用F表示
+  * 2中提到的对象用M表示
+  * 3中提到的对象内部环境用a表示
+  那么得到新的表达式: \delta = ((((M a) + F) + F) + F)
+  其中: F = a -> M a
+
+* 回到Monad
+  上面的公式 \delta 其实和Haskell中的Monad很类似了，Monad可以看作是对公式 \delta 这一类运算的抽象
+  从cshap的角度理解, Monad可以看作是一个接口或者抽象类, (伪)代码如下:
+  #+BEGIN_SRC csharp
+    public interface Monad<T<U>>
+    {
+        Monad<T<U>> Return(U a);
+        static Monad<T<U>> Bind (Monad<T<U>> m, Func<U, Monad<T<U>>> f)
+    }
+
+  #+END_SRC
+  其中:
+  * U是被包裹的类,比如Gold里面的gold的类型int
+  * 其次T是外层的包裹类，比如Gold
+  * 然后「Return」用于将一个被包裹的类提升为一个Monad的类
+  * 然后 「Bind」则是 \delta 中的 「+」一个二元运算
+  这些基本上也是Haskell中实现一个Monad需要完成的"接口"实现(当然上面的代码在C#里面是没法运行的,C#只能有限的模拟Haskell中的moand)
+  也就是说只要有类和该类的行为，满足或者说实现这个接口，这个类就可以被看作是一个Monad
+  所以，抛开理论上的定义，对Monad的使用可以看作是通过二元运算，串联起来的一连串的运算，而不同的二元运算可以实现不同的逻辑，从而达到对运行流程的控制、对副作用的管理等功能
