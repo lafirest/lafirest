@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://lafirest.github.io/rss.xml"
+      title="RSS feed for https://lafirest.github.io/">
+<title>Gentoo 安装问题记录</title>
+<meta name="author" content="firest">
+<meta name="referrer" content="no-referrer">
+<link href= "static/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"></div>
+<div id="content">
+<div class="post-date">10 Mar 2022</div><h1 class="post-title"><a href="https://lafirest.github.io/kde_fcitx_emacs.html">Gentoo 安装问题记录</a></h1>
+<nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgc278834">1. 镜像</a></li>
+<li><a href="#orgbd12275">2. 字体</a></li>
+<li><a href="#orgeded62e">3. KDE</a></li>
+<li><a href="#org07d942c">4. Fcitx</a>
+<ul>
+<li><a href="#org3491d0d">4.1. 各个包的用途</a></li>
+<li><a href="#orgef96682">4.2. xprofile 配置</a></li>
+</ul>
+</li>
+<li><a href="#orgb4ebd58">5. Emacs</a>
+<ul>
+<li><a href="#org389dbae">5.1. 无法激活 fcitx</a></li>
+<li><a href="#orgee5d017">5.2. 可以激活和使用 fcitx, 但是输入的文字不会出现在 buffer 里</a></li>
+<li><a href="#org638d86a">5.3. all-the-icons 显示为「tofu」</a></li>
+</ul>
+</li>
+<li><a href="#orgfa73a4e">6. <span class="todo TODO">TODO</span> 显卡</a></li>
+<li><a href="#org36b4f63">7. <span class="todo TODO">TODO</span> 声卡</a></li>
+<li><a href="#orge52f0be">8. <span class="todo TODO">TODO</span> Firefox</a></li>
+</ul>
+</div>
+</nav>
+<p>
+本来周末想写下最近关于「编译期计算」的一些零碎的想法，结果家里的 debian 升级后挂掉了，我才知道自己原来一直使用的是 <i>sid</i> 分支。
+</p>
+
+<p>
+然后周末就把系统换回 gentoo 了，和以前一样，安装中遇见了些问题，有些一下都没想起来为什么，浪费了些时间，进行下记录，下次也好方便排查。
+</p>
+
+<div id="outline-container-orgc278834" class="outline-2">
+<h2 id="orgc278834"><span class="section-number-2">1</span> 镜像</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+<a href="https://mirrors.tuna.tsinghua.edu.cn/git/gentoo-portage.git">清华大学的 git 镜像</a>是速度最快的，使用 <i>mirrorselect</i> 会选择到清华大学的 <i>rsync</i> 镜像
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgbd12275" class="outline-2">
+<h2 id="orgbd12275"><span class="section-number-2">2</span> 字体</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+没安装中文字体前, 中文都会显示为「tofu」, 开源中文字体除了传统的「文泉驿」外，还有「思源」、「花园明体」、「霞鹜文楷」，
+「霞鹜文楷」目前来看最美观
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgeded62e" class="outline-2">
+<h2 id="orgeded62e"><span class="section-number-2">3</span> KDE</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+KDE 的问题是，安装后 <i>ssdm</i> 是没有安装的，不知道为什么这次会是这样，重启后直接进入了终端，导致我怀疑是没有安装成功
+</p>
+
+<p>
+另外一个问题就是，不但 <i>ssdm</i> 没有安装，其他什么 KDE 的 APP 都没安装，只有个 KDE WM, 很奇怪，需要自己手动安装
+</p>
+</div>
+</div>
+
+<div id="outline-container-org07d942c" class="outline-2">
+<h2 id="org07d942c"><span class="section-number-2">4</span> Fcitx</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-org3491d0d" class="outline-3">
+<h3 id="org3491d0d"><span class="section-number-3">4.1</span> 各个包的用途</h3>
+<div class="outline-text-3" id="text-4-1">
+<ol class="org-ol">
+<li><code>app-i18n/fcitx</code> 框架</li>
+<li><p>
+<code>app-i18n/kcm-fcitx</code> 配置工具
+</p>
+
+<p>
+没有这个包的话，是无法从图形界面进行配置的
+</p></li>
+<li><p>
+<code>app-i18n/fcitx-qt5</code>
+</p>
+
+<p>
+这个包必须安装，否则在所有 QT5 的 APP 里面，都是不能激活 fcitx 的
+</p></li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-orgef96682" class="outline-3">
+<h3 id="orgef96682"><span class="section-number-3">4.2</span> xprofile 配置</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+需要在 ~/.xprofile 中加入下面的设置，然后重新登录才能使用 fcitx
+</p>
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #DCDCCC; font-weight: bold;">export</span> <span style="color: #DFAF8F;">XMODIFIERS</span>=@<span style="color: #DFAF8F;">im</span>=fcitx
+<span style="color: #DCDCCC; font-weight: bold;">export</span> <span style="color: #DFAF8F;">GTK_IM_MODULE</span>=fcitx
+<span style="color: #DCDCCC; font-weight: bold;">export</span> <span style="color: #DFAF8F;">QT_IM_MODULE</span>=fcitxf
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb4ebd58" class="outline-2">
+<h2 id="orgb4ebd58"><span class="section-number-2">5</span> Emacs</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+<div id="outline-container-org389dbae" class="outline-3">
+<h3 id="org389dbae"><span class="section-number-3">5.1</span> 无法激活 fcitx</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+这个有两个原因:
+</p>
+<ol class="org-ol">
+<li>fcitx 的激活快捷键和 emacs 本身的快捷键有冲突，修改其中任意一个对应的快捷键就行</li>
+<li>emacs 找不到合适的字体时，是不会激活输入法的，也不会有任意提示，安装 <code>media-fonts/font-util</code> 这个包就行</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-orgee5d017" class="outline-3">
+<h3 id="orgee5d017"><span class="section-number-3">5.2</span> 可以激活和使用 fcitx, 但是输入的文字不会出现在 buffer 里</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+emacs 中 im 和 <b>LC_CTYPE</b> 有关，如果不是 <b>zh_CN.UTF8</b> 是无法输入中文的，似乎是一个 Bug 来着，可以直接把 locale
+设置为 /zh_CN.UTF8/，也可以通过 <code>LC_CTYPE=zh_CN.UTF8 emacs</code> 的方式来启动
+</p>
+</div>
+</div>
+
+<div id="outline-container-org638d86a" class="outline-3">
+<h3 id="org638d86a"><span class="section-number-3">5.3</span> all-the-icons 显示为「tofu」</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+即使安装了 <code>all-the-icons</code> , mode line 等地方依然会出现 「tofu（乱码）」, 原因是使用的字体不支持 UTF-8，更换下默认字体就行
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfa73a4e" class="outline-2">
+<h2 id="orgfa73a4e"><span class="section-number-2">6</span> <span class="todo TODO">TODO</span> 显卡</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+还未更新为 Nvida 驱动
+</p>
+</div>
+</div>
+
+<div id="outline-container-org36b4f63" class="outline-2">
+<h2 id="org36b4f63"><span class="section-number-2">7</span> <span class="todo TODO">TODO</span> 声卡</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+genkernel 编译的内核似乎没有包含 Type-C 的声卡支持，估计需要自己手动编译下内核了
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge52f0be" class="outline-2">
+<h2 id="orge52f0be"><span class="section-number-2">8</span> <span class="todo TODO">TODO</span> Firefox</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+Firefox 时不时就会卡死，以前也遇到过，后来的解决办法是换了个浏览器?
+</p>
+</div>
+</div>
+<div class="taglist"><a href="https://lafirest.github.io/tags.html">Tags</a>: <a href="https://lafirest.github.io/tag-kde.html">kde</a> <a href="https://lafirest.github.io/tag-fcitx.html">fcitx</a> <a href="https://lafirest.github.io/tag-emacs.html">emacs</a> </div></div>
+<div id="postamble" class="status"></div>
+</body>
+</html>

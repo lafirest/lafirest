@@ -6,7 +6,7 @@
   讲解Monad是什么的文章很多，但是基本上都是以范畴论的概念来展开说明的,这导致了理解成本特别高
   从一个小坑掉入了一个大坑
   这里不谈理论，将通过下面的C#(伪)代码来说明什么是Monad，所以其实并不严谨
-  #+BEGIN_SRC csharp
+  #+BEGIN_SRC java
     public delegate Gold F(int x);
 	public class Gold
 	{

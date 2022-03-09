@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2022-03-10 Thu 02:21 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KDE kaj Fcitx kaj Emacs</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">KDE kaj Fcitx kaj Emacs</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orga17b65f">1. KDE</a></li>
+<li><a href="#orgca5a2c1">2. Fcitx</a>
+<ul>
+<li><a href="#org1611a10">2.1. 各个包的用途</a></li>
+<li><a href="#org45f75f9">2.2. xprofile 配置</a></li>
+</ul>
+</li>
+<li><a href="#org0cdac8d">3. Emacs</a>
+<ul>
+<li><a href="#orgf470410">3.1. 无法激活 fcitx</a></li>
+<li><a href="#org78555dc">3.2. 可以激活和使用 fcitx, 但是输入的文字不会出现在 buffer 里</a></li>
+<li><a href="#orgc50f30e">3.3. all-the-icons 显示为「tofu」</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+本来周末想写下最近关于「编译期计算」的一些零碎的想法，结果家里的 debian 升级后挂掉了，我才知道自己原来一直使用的是 <i>sid</i> 分支。
+</p>
+
+<p>
+然后周末就把系统换回 gentoo 了，和以前一样，安装中遇见了些问题，有些一下都没想起来为什么，浪费了些时间，进行下记录，下次也好方便排查。
+</p>
+
+<div id="outline-container-orga17b65f" class="outline-2">
+<h2 id="orga17b65f"><span class="section-number-2">1</span> KDE</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+KDE 的问题是，安装后 <i>ssdm</i> 是没有安装的，不知道为什么这次会是这样，重启后直接进入了终端，导致我怀疑是没有安装成功
+</p>
+
+<p>
+另外一个问题就是，不但 <i>ssdm</i> 没有安装，其他什么 KDE 的 APP 都没安装，只有个 KDM WM, 很奇怪，需要自己手动安装
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgca5a2c1" class="outline-2">
+<h2 id="orgca5a2c1"><span class="section-number-2">2</span> Fcitx</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org1611a10" class="outline-3">
+<h3 id="org1611a10"><span class="section-number-3">2.1</span> 各个包的用途</h3>
+<div class="outline-text-3" id="text-2-1">
+<ol class="org-ol">
+<li><code>app-i18n/fcitx</code> 框架</li>
+<li><p>
+<code>app-i18n/kcm-fcitx</code> 配置工具
+</p>
+
+<p>
+没有这个包的话，是无法从图形界面进行配置的
+</p></li>
+<li><p>
+<code>app-i18n/fcitx-qt5</code>
+</p>
+
+<p>
+这个包必须安装，否则在所有 QT5 的 APP 里面，都是不能激活 fcitx 的
+</p></li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org45f75f9" class="outline-3">
+<h3 id="org45f75f9"><span class="section-number-3">2.2</span> xprofile 配置</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+需要在 ~/.xprofile 中加入下面的设置，然后重新登录才能使用 fcitx
+</p>
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #DCDCCC; font-weight: bold;">export</span> <span style="color: #DFAF8F;">XMODIFIERS</span>=@<span style="color: #DFAF8F;">im</span>=fcitx
+<span style="color: #DCDCCC; font-weight: bold;">export</span> <span style="color: #DFAF8F;">GTK_IM_MODULE</span>=fcitx
+<span style="color: #DCDCCC; font-weight: bold;">export</span> <span style="color: #DFAF8F;">QT_IM_MODULE</span>=fcitxf
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0cdac8d" class="outline-2">
+<h2 id="org0cdac8d"><span class="section-number-2">3</span> Emacs</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-orgf470410" class="outline-3">
+<h3 id="orgf470410"><span class="section-number-3">3.1</span> 无法激活 fcitx</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+这个有两个原因:
+</p>
+<ol class="org-ol">
+<li>fcitx 的激活快捷键和 emacs 本身的快捷键有冲突，修改其中任意一个对应的快捷键就行</li>
+<li>emacs 找不到合适的字体时，是不会激活输入法的，也不会有任意提示，安装 <code>media-fonts/font-util</code> 这个包就行</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org78555dc" class="outline-3">
+<h3 id="org78555dc"><span class="section-number-3">3.2</span> 可以激活和使用 fcitx, 但是输入的文字不会出现在 buffer 里</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+emacs 中 im 和 <b>LC_CTYPE</b> 有关，如果不是 <b>zh_CN.UTF8</b> 是无法输入中文的，似乎是一个 Bug 来着，可以直接把 locale
+设置为 /zh_CN.UTF8/，也可以通过 <code>LC_CTYPE=zh_CN.UTF8 emacs</code> 的方式来启动
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc50f30e" class="outline-3">
+<h3 id="orgc50f30e"><span class="section-number-3">3.3</span> all-the-icons 显示为「tofu」</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+即使安装了 <code>all-the-icons</code> , mode line 等地方依然会出现「tofu（乱码）, 原因是使用的字体不支持 UTF-8，更换下默认字体就行
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2022-03-10 Thu 02:21</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
