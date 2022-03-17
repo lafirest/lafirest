@@ -1,3 +1,0 @@
-#+TITLE: 使用Common Lisp理解Monad
-
-* 先挖坑
