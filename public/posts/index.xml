@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Posts on Cogito, ergo sum</title>
+    <link>https://lafirest.github.io/posts/</link>
+    <description>Recent content in Posts on Cogito, ergo sum</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 12 Jul 2021 02:40:30 +0800</lastBuildDate><atom:link href="https://lafirest.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>通过C#理解Monad</title>
+      <link>https://lafirest.github.io/posts/intro_monad_csharp/</link>
+      <pubDate>Mon, 12 Jul 2021 02:40:30 +0800</pubDate>
+      
+      <guid>https://lafirest.github.io/posts/intro_monad_csharp/</guid>
+      <description>关于什么是 Monad 讲解 Monad 是什么的文章很多，但是基本上都是以范畴论的概念来展开说明的,这导致了理解成本特别高 从一个小坑掉入了一个大坑 这里不谈理论，将通过下面的 C#(伪)代码来说明什么是 Monad，所以其实并不严谨 public delegate Gold F(int x); public class Gold {  private int gold;   public Gold(int x) =&amp;gt; gold = x;   public static Gold operator + (F f) =&amp;gt; f(gold);   public static Gold Double(int x) =&amp;gt; new Gold(x * 2);  public static Gold Zero(int x) =&amp;gt; new Gold(0); } 计算表达式 微软在设计 F#时，为了避免使用 Monad 这个单词，发明了「计算表达式」这个概念，这个概念其实很好的反映了 Monad 的本质 先来看个小学级别的计算式子: α = 1 + 2 + 3 + 4 + 5 然后我们把里面的数字全部换成 Gold 类型，得到: β = Gold + Gold + Gold + Gold + Gold 但是上面我们并没有实现 Gold + Gold, 而是实现了 Gold + F, 不过 Gold + F -&amp;gt; Gold, 所以我们可以将 β 里面的 Gold 替换为 Gold + F, 从而得到: γ = (((Gold + F) + F) + F) + F 对 γ 的扩展  首先我们能看到，在上面的代码中，F可以是「Double」也可以是「Zero」,也就是这个表达式并不关心执行的具体流程，只要该流程满足 F 的声明即可  其次我们将表达式中的 Gold 换成 Diamond、HP、MP，并不影响 γ 这个表达式的运算，也就是说这个表达式并不关心作用对象的类型  最后，我们可以发现 γ 这个表达式并不关心 Gold 里面是 int gold 还是 long gold,或者 string gold, 也就是说这个表达式并不关心对象的内部环境   总结:  我们将 1 中的执行流程用 F 表示  2 中提到的对象用 M 表示  3 中提到的对象内部环境用 a 表示   那么得到新的表达式: δ = ((((M a) + F) + F) + F) 其中: F = a -&amp;gt; M a 回到 Monad 上面的公式 δ 其实和 Haskell 中的 Monad 很类似了，Monad 可以看作是对公式 δ 这一类运算的抽象 从 cshap 的角度理解, Monad 可以看作是一个接口或者抽象类, (伪)代码如下: public interface Monad&amp;lt;T&amp;lt;U&amp;gt;&amp;gt; {  Monad&amp;lt;T&amp;lt;U&amp;gt;&amp;gt; Return(U a);  static Monad&amp;lt;T&amp;lt;U&amp;gt;&amp;gt; Bind (Monad&amp;lt;T&amp;lt;U&amp;gt;&amp;gt; m, Func&amp;lt;U, Monad&amp;lt;T&amp;lt;U&amp;gt;&amp;gt;&amp;gt; f) } 其中:  U 是被包裹的类,比如 Gold 里面的 gold 的类型 int  其次 T 是外层的包裹类，比如 Gold  然后「Return」用于将一个被包裹的类提升为一个 Monad 的类  然后 「Bind」则是 δ 中的 「+」一个二元运算   这些基本上也是 Haskell 中实现一个 Monad 需要完成的&amp;quot;接口&amp;quot;实现(当然上面的代码在 C#里面是没法运行的,C#只能有限的模拟 Haskell 中的 moand) 也就是说只要有类和该类的行为，满足或者说实现这个接口，这个类就可以被看作是一个 Monad 所以，抛开理论上的定义，对 Monad 的使用可以看作是通过二元运算，串联起来的一连串的运算，而不同的二元运算可以实现不同的逻辑，从而达到对运行流程的控制、对副作用的管理等功能 </description>
+    </item>
+    
+    <item>
+      <title>关于消息路由表实现的思考</title>
+      <link>https://lafirest.github.io/posts/topic_tree/</link>
+      <pubDate>Mon, 05 Jul 2021 00:03:00 +0800</pubDate>
+      
+      <guid>https://lafirest.github.io/posts/topic_tree/</guid>
+      <description>如何实现高效且内存相对紧凑的消息路由结构</description>
+    </item>
+    
+  </channel>
+</rss>

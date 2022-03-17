@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>关于消息路由表实现的思考 | Cogito, ergo sum</title>
+<meta name="keywords" content="字典树, 路由表" />
+<meta name="description" content="如何实现高效且内存相对紧凑的消息路由结构">
+<meta name="author" content="firest">
+<link rel="canonical" href="https://lafirest.github.io/posts/topic_tree/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.48a18943c2fc15c38a372b8dde1f5e5dc0bc64fa6cb90f5a817d2f8c76b7f3ae.css" integrity="sha256-SKGJQ8L8FcOKNyuN3h9eXcC8ZPpsuQ9agX0vjHa3864=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.4dcb3c4f38462f66c6b6137227726f5543cb934cca9788f041c087e374491df2.js" integrity="sha256-Tcs8TzhGL2bGthNyJ3JvVUPLk0zKl4jwQcCH43RJHfI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://lafirest.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://lafirest.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://lafirest.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://lafirest.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://lafirest.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="关于消息路由表实现的思考" />
+<meta property="og:description" content="如何实现高效且内存相对紧凑的消息路由结构" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lafirest.github.io/posts/topic_tree/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-05T00:03:00&#43;08:00" />
+<meta property="article:modified_time" content="2021-07-05T00:03:00&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="关于消息路由表实现的思考"/>
+<meta name="twitter:description" content="如何实现高效且内存相对紧凑的消息路由结构"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Posts",
+      "item": "https://lafirest.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "关于消息路由表实现的思考",
+      "item": "https://lafirest.github.io/posts/topic_tree/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "关于消息路由表实现的思考",
+  "name": "关于消息路由表实现的思考",
+  "description": "如何实现高效且内存相对紧凑的消息路由结构",
+  "keywords": [
+    "字典树", "路由表"
+  ],
+  "articleBody": "根和叶 消息队列、文件系统、网络路由等场景经常需要处理路由信息，一般都是由路径节点名和分隔符做成,比如: /usr/lib/apache2/modules/httpd.exp /topic/who/am/i  实际上这种结构，可以看作是从树的根节点到某个叶子节点的完整路径，也就是说这种结构的集合是一棵树然后加上路由信息常见使用场景都涉及到匹配，所以大多数情况，这里数据往往被实现为字典树\n也许我们不太合适? 但我总感觉这种结构实现为字典树并不太好，路由信息和字典树应用对象有些很明显的不同: 单词的长度是可预期的，并不会太长。但路由信息是不能预期长度的，可能会导致树的高度失控，当出现大量长路径且公共祖先遥远的情况下，树可能就退化为了链表 单词的基本单元是字符，是一个有限集，且西文情况下，这个集合很小，字典树结构能很好的进行处理。而路由信息的基本单元是单词，可以说是一个无限集，这里又有两种情况: 坚持以单词为基本单元(相当于压缩字典树)，这个时候每个节点需要引入一个离散映射结构，用来存储 单词 → 节点 的信息这将导致内存耗用变得难以预测，还有一点就是如果每个节点的数据量不大，在某些离散映射的实现里，可能也会退化为线性搜索 以字符为基本单元，但这种情况下西文字符集一般是不够用的，所以常见的做法是转换为字节流进行处理每个节点需要256个槽，这对于字典来说还好，但是对于路由信息来说，内存耗用可能会变得难以接受，这种情况开源使用自适应基数树进行解决。缺点就是数据调整时可能除非自适应调整，另外一个很严重的问题就是，路由信息的行为上主要还是以分隔符分割出来的单词作为基本单元，如果以字符为基本单元，进行模式匹配时，处理时稍微复杂些    还可以挽回么? 自动机 自动机应该可以实现路由结构，而且搜索性能可能比上面的字典树实现都要快，但内存耗用也应该更加夸张，暂时不考虑\n平坦化结构 这种方法实现逻辑如下:\n 每条消息路由的，每个从根节点出发的子路径都创建一个映射 映射的实现有两种:例子: /i/am/some/topic   只包含自己的直接子节点 这种情况下，对子树的搜索会以递归的方式完成\n   key value     i am   i/am some   i/am/some topic   i/am/some/topic _      包含自己的直接子节点和所有后代节点 这种情况下，能很好的完成对某个层级的所有节点的匹配，同时又能很方便的找到所有后代节点\n   id key child desc     1 i am 2, 3, 4   2 i/am some 3, 4   3 i/am/some topic 4   4 i/am/some/topic _ _        这种方式能够很好的处理路由直接查找和子树查找，缺点就是内存耗用比较大\n平衡树+映射表 这种实现的逻辑如下:\n 引入一颗平衡树(红黑树或者B树)，和字典树一样，将路径中的每个单词做为一个节点,而有序规则如下:  子路径永远比父路径小 不同的路径比较时，从根节点依次进行比较，兄弟节点以单词大小进行比较(为了加速比较，可以对字典 进行预先哈希，比较时就直接比较哈希值，不过哈希算法需要保证顺序映射不会颠倒)   引入一个映射表，类似平坦化结构里面的思路，存储从 根节点 → 某个子节点 的 路径 → 该节点 的映射  应用说明   直接搜索某个路径\n例子: /i/am/some/topic这种情况，直接查找映射表，通过映射表找到对应的节点即可\n    搜索子树\n例子: /i/am/+/topic/what这种情况，搜索分为两步:\n 通过映射表找到\"i/am“这个路径对应的节点 从该节点开始搜索所有小于该节点，且树高差距为1的节点 收集这些节点的名称，比如nameA、nameB、nameC 将这些名称依次带入搜索路径的 + 处，形成所需路径, 比如”/i/am/nameA/topic/what\"，这个时候直接在映射表中查找对应节点即可    ",
+  "wordCount" : "90",
+  "inLanguage": "en",
+  "datePublished": "2021-07-05T00:03:00+08:00",
+  "dateModified": "2021-07-05T00:03:00+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "firest"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://lafirest.github.io/posts/topic_tree/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Cogito, ergo sum",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://lafirest.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://lafirest.github.io" accesskey="h" title="Cogito, ergo sum (Alt + H)">Cogito, ergo sum</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://lafirest.github.io/archives/" title="Archives">
+                    <span>Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://lafirest.github.io/categories/" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://lafirest.github.io/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://lafirest.github.io">Home</a>&nbsp;»&nbsp;<a href="https://lafirest.github.io/posts/">Posts</a></div>
+    <h1 class="post-title">
+      关于消息路由表实现的思考
+    </h1>
+    <div class="post-description">
+      如何实现高效且内存相对紧凑的消息路由结构
+    </div>
+    <div class="post-meta"><span title='2021-07-05 00:03:00 +0800 CST'>July 5, 2021</span>&nbsp;·&nbsp;firest
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e6%a0%b9%e5%92%8c%e5%8f%b6" aria-label="根和叶">根和叶</a></li>
+                <li>
+                    <a href="#%e4%b9%9f%e8%ae%b8%e6%88%91%e4%bb%ac%e4%b8%8d%e5%a4%aa%e5%90%88%e9%80%82" aria-label="也许我们不太合适?">也许我们不太合适?</a></li>
+                <li>
+                    <a href="#%e8%bf%98%e5%8f%af%e4%bb%a5%e6%8c%bd%e5%9b%9e%e4%b9%88" aria-label="还可以挽回么?">还可以挽回么?</a><ul>
+                        
+                <li>
+                    <a href="#%e8%87%aa%e5%8a%a8%e6%9c%ba" aria-label="自动机">自动机</a></li>
+                <li>
+                    <a href="#%e5%b9%b3%e5%9d%a6%e5%8c%96%e7%bb%93%e6%9e%84" aria-label="平坦化结构">平坦化结构</a></li>
+                <li>
+                    <a href="#%e5%b9%b3%e8%a1%a1%e6%a0%91-plus-%e6%98%a0%e5%b0%84%e8%a1%a8" aria-label="平衡树&#43;映射表">平衡树+映射表</a><ul>
+                        
+                <li>
+                    <a href="#%e5%ba%94%e7%94%a8%e8%af%b4%e6%98%8e" aria-label="应用说明">应用说明</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h2 id="根和叶">根和叶<a hidden class="anchor" aria-hidden="true" href="#根和叶">#</a></h2>
+<p>消息队列、文件系统、网络路由等场景经常需要处理路由信息，一般都是由路径节点名和分隔符做成,比如:<!-- raw HTML omitted --></p>
+<ul>
+<li>/usr/lib/apache2/modules/httpd.exp</li>
+<li>/topic/who/am/i</li>
+</ul>
+<p>实际上这种结构，可以看作是从树的根节点到某个叶子节点的完整路径，也就是说这种结构的集合是一棵树<!-- raw HTML omitted -->
+然后加上路由信息常见使用场景都涉及到匹配，所以大多数情况，这里数据往往被实现为<a href="https://en.wikipedia.org/wiki/Trie">字典树</a></p>
+<h2 id="也许我们不太合适">也许我们不太合适?<a hidden class="anchor" aria-hidden="true" href="#也许我们不太合适">#</a></h2>
+<p>但我总感觉这种结构实现为字典树并不太好，路由信息和字典树应用对象有些很明显的不同:<!-- raw HTML omitted --></p>
+<ol>
+<li>单词的长度是可预期的，并不会太长。但路由信息是不能预期长度的，可能会导致树的高度失控，当出现<!-- raw HTML omitted -->
+大量长路径且公共祖先遥远的情况下，树可能就退化为了链表</li>
+<li>单词的基本单元是字符，是一个有限集，且西文情况下，这个集合很小，字典树结构能很好的进行处理。<!-- raw HTML omitted -->
+而路由信息的基本单元是单词，可以说是一个无限集，这里又有两种情况:<!-- raw HTML omitted -->
+<ol>
+<li>坚持以单词为基本单元(相当于压缩字典树)，这个时候每个节点需要引入一个离散映射结构，用来存储 <strong>单词</strong> → <strong>节点</strong> 的信息<!-- raw HTML omitted -->
+这将导致内存耗用变得难以预测，还有一点就是如果每个节点的数据量不大，在某些离散映射的实现里，可能也会<!-- raw HTML omitted -->
+退化为线性搜索</li>
+<li>以字符为基本单元，但这种情况下西文字符集一般是不够用的，所以常见的做法是转换为字节流进行处理<!-- raw HTML omitted -->
+每个节点需要256个槽，这对于字典来说还好，但是对于路由信息来说，内存耗用可能会变得难以接受，<!-- raw HTML omitted -->
+这种情况开源使用<a href="https://15721.courses.cs.cmu.edu/spring2016/papers/leis-icde2013.pdf">自适应基数树</a>进行解决。缺点就是数据调整时可能除非自适应调整，另外一个很严重的<!-- raw HTML omitted -->
+问题就是，路由信息的行为上主要还是以分隔符分割出来的单词作为基本单元，如果以字符为基本单元，<!-- raw HTML omitted -->
+进行模式匹配时，处理时稍微复杂些</li>
+</ol>
+</li>
+</ol>
+<h2 id="还可以挽回么">还可以挽回么?<a hidden class="anchor" aria-hidden="true" href="#还可以挽回么">#</a></h2>
+<h3 id="自动机">自动机<a hidden class="anchor" aria-hidden="true" href="#自动机">#</a></h3>
+<p>自动机应该可以实现路由结构，而且搜索性能可能比上面的字典树实现都要快，但内存耗用也应该更加夸张，暂时不考虑</p>
+<h3 id="平坦化结构">平坦化结构<a hidden class="anchor" aria-hidden="true" href="#平坦化结构">#</a></h3>
+<p>这种方法实现逻辑如下:</p>
+<ol>
+<li>每条消息路由的，每个从根节点出发的子路径都创建一个映射</li>
+<li>映射的实现有两种:<!-- raw HTML omitted -->
+例子: /i/am/some/topic
+<ol>
+<li>
+<p>只包含自己的直接子节点
+这种情况下，对子树的搜索会以递归的方式完成</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>i</td>
+<td>am</td>
+</tr>
+<tr>
+<td>i/am</td>
+<td>some</td>
+</tr>
+<tr>
+<td>i/am/some</td>
+<td>topic</td>
+</tr>
+<tr>
+<td>i/am/some/topic</td>
+<td>_</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>包含自己的直接子节点和所有后代节点
+这种情况下，能很好的完成对某个层级的所有节点的匹配，同时又能很方便的找到所有后代节点</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>key</th>
+<th>child</th>
+<th>desc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>i</td>
+<td>am</td>
+<td>2, 3, 4</td>
+</tr>
+<tr>
+<td>2</td>
+<td>i/am</td>
+<td>some</td>
+<td>3, 4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>i/am/some</td>
+<td>topic</td>
+<td>4</td>
+</tr>
+<tr>
+<td>4</td>
+<td>i/am/some/topic</td>
+<td>_</td>
+<td>_</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ol>
+</li>
+</ol>
+<p>这种方式能够很好的处理路由直接查找和子树查找，缺点就是内存耗用比较大</p>
+<h3 id="平衡树-plus-映射表">平衡树+映射表<a hidden class="anchor" aria-hidden="true" href="#平衡树-plus-映射表">#</a></h3>
+<p>这种实现的逻辑如下:</p>
+<ol>
+<li>引入一颗平衡树(红黑树或者B树)，和字典树一样，将路径中的每个单词做为一个节点,而有序规则如下:
+<ol>
+<li>子路径永远比父路径小</li>
+<li>不同的路径比较时，从根节点依次进行比较，兄弟节点以单词大小进行比较(为了加速比较，可以对字典
+进行预先哈希，比较时就直接比较哈希值，不过哈希算法需要保证顺序映射不会颠倒)</li>
+</ol>
+</li>
+<li>引入一个映射表，类似<a href="#%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%BB%93%E6%9E%84">平坦化结构</a>里面的思路，存储从 <strong>根节点</strong> → <strong>某个子节点</strong> 的 <strong>路径</strong> → <strong>该节点</strong> 的映射</li>
+</ol>
+<h4 id="应用说明">应用说明<a hidden class="anchor" aria-hidden="true" href="#应用说明">#</a></h4>
+<!-- raw HTML omitted -->
+<ul>
+<li>
+<p>直接搜索某个路径</p>
+<p>例子: /i/am/some/topic<!-- raw HTML omitted -->
+这种情况，直接查找映射表，通过映射表找到对应的节点即可</p>
+</li>
+</ul>
+<!-- raw HTML omitted -->
+<ul>
+<li>
+<p>搜索子树</p>
+<p>例子: /i/am/+/topic/what<!-- raw HTML omitted -->
+这种情况，搜索分为两步:</p>
+<ol>
+<li>通过映射表找到&quot;<em>i/am</em>&ldquo;这个路径对应的节点</li>
+<li>从该节点开始搜索所有小于该节点，且树高差距为1的节点</li>
+<li>收集这些节点的名称，比如nameA、nameB、nameC</li>
+<li>将这些名称依次带入搜索路径的 <strong>+</strong> 处，形成所需路径, 比如&rdquo;/i/am/nameA/topic/what&quot;，这个时候直接<!-- raw HTML omitted -->
+在映射表中查找对应节点即可</li>
+</ol>
+</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://lafirest.github.io/tags/%E5%AD%97%E5%85%B8%E6%A0%91/">字典树</a></li>
+      <li><a href="https://lafirest.github.io/tags/%E8%B7%AF%E7%94%B1%E8%A1%A8/">路由表</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="https://lafirest.github.io/posts/intro_monad_csharp/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>通过C#理解Monad</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2022 <a href="https://lafirest.github.io">Cogito, ergo sum</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>
