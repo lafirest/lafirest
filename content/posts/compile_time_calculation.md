@@ -157,7 +157,7 @@ C++11 引入了一个关键字 [constexpr](https://en.cppreference.com/w/cpp/lan
 中有专门定义 _编译器宏_ 的宏
 
 
-## define-compilr-macro {#define-compilr-macro}
+## define-compiler-macro {#define-compiler-macro}
 
 先看代码,
 
@@ -254,6 +254,6 @@ test2 的汇编代码:
 
 ## 编译期求值可以做什么 {#编译期求值可以做什么}
 
-因为真实世界存在大量 IO 副作用,不存在真的的纯函数,所以编译期求值的适用范围比运行时求值要小很多。
+因为真实世界存在大量 IO 副作用,不存在真正的的纯函数,所以编译期求值的适用范围比运行时求值要小很多。
 
 最常见的还是数值计算、文本处理、序列化/反序列化、类型转换等的优化。

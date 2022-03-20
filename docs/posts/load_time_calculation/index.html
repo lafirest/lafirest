@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Programming Language Roam: Load-Time Calculation | Cogito, ergo sum</title>
+<meta name="keywords" content="Common-Lisp" />
+<meta name="description" content="「加载期计算」，是指: 在代码加载时执行运算或者这种能力
+和 编译期计算 相比，加载期计算可能适用范围更广
+场景 加载期计算主要适用于以下的场景：
+ 程序运行时需要的某些信息，如环境变量等，无法在编译期间确定 这些信息在程序启动后几乎不会发生变化 程序运行时需要根据不同的环境信息，执行不同的运算  比较典型的场景就是跨平台应用，以及使用静态配置的应用，这些应用在真正运行前是无法获得目标平台、或者目标配置的 值。而运行后，要么对这些信息进行缓存以便反复使用，要么就是每次使用这些信息时，都重新进行一次读取/查询。
+而如果程序支持「加载期计算」，则可以在代码加载时，读取相关信息，然后直接将信息写入到调用的代码处，甚至，可以根据 信息的值来选择性生成不同的处理代码。
+这样，对于程序而言，这些信息就变成了静态的常量了，且无用的代码分支也会被裁剪掉，这样就减少了程序在缓存、调用、 分支预测上的开销了
+Load-Time Hook/Callback 部分语言，比如 Erlang、C#(Unity) 等支持在模块、类、程序集加载时，执行某个函数，这种行为可以看作是代码加载时的一个 回调，或者说是一种受限的「加载期计算」，因为这样的计算，执行的都是编译期已经生成好的代码，无法通过在加载期间执行的运算来影响到原有的代码逻辑。
+C# (.Net) 可以在加载时，找到对应属性的程序集、类、方法、乃至字段等，然后动态修改、生成代码。 这种操作，可以算是在代码加载期间执行的 JIT 操作，而「加载期计算」更多的是强调「计算」或者说 「求值」， 但总的来说，区别不大，可以看作是一回事。
+示例，零开销配置 这里做一个简单的演示，使用 message 文本文件做为配置文件，里面的内容为:
+Hello， World! 定义函数 get-message ，直接读取整个文本文件，当作是配置读取操作：
+(defun get-message ()  (uiop:read-file-string &#34;~/message&#34;)) 定义函数 test ， 直接使用 get-message 模拟读取配置操作
+(defun test ()  (let ((msg (get-message)))  msg)) 为了防止编译器优化，这里写的很啰嗦，第三行的 msg 实际上可以看作是具体的配置操作过程，只是这里简单的用返回这个行为 来模拟
+定义一个函数 test2 ， 使用加载期计算，在代码加载时，求出 get-message 的值，然后直接写入到 test2 的代码内">
+<meta name="author" content="firest">
+<link rel="canonical" href="https://lafirest.github.io/posts/load_time_calculation/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.48a18943c2fc15c38a372b8dde1f5e5dc0bc64fa6cb90f5a817d2f8c76b7f3ae.css" integrity="sha256-SKGJQ8L8FcOKNyuN3h9eXcC8ZPpsuQ9agX0vjHa3864=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.4dcb3c4f38462f66c6b6137227726f5543cb934cca9788f041c087e374491df2.js" integrity="sha256-Tcs8TzhGL2bGthNyJ3JvVUPLk0zKl4jwQcCH43RJHfI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://lafirest.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://lafirest.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://lafirest.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://lafirest.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://lafirest.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Programming Language Roam: Load-Time Calculation" />
+<meta property="og:description" content="「加载期计算」，是指: 在代码加载时执行运算或者这种能力
+和 编译期计算 相比，加载期计算可能适用范围更广
+场景 加载期计算主要适用于以下的场景：
+ 程序运行时需要的某些信息，如环境变量等，无法在编译期间确定 这些信息在程序启动后几乎不会发生变化 程序运行时需要根据不同的环境信息，执行不同的运算  比较典型的场景就是跨平台应用，以及使用静态配置的应用，这些应用在真正运行前是无法获得目标平台、或者目标配置的 值。而运行后，要么对这些信息进行缓存以便反复使用，要么就是每次使用这些信息时，都重新进行一次读取/查询。
+而如果程序支持「加载期计算」，则可以在代码加载时，读取相关信息，然后直接将信息写入到调用的代码处，甚至，可以根据 信息的值来选择性生成不同的处理代码。
+这样，对于程序而言，这些信息就变成了静态的常量了，且无用的代码分支也会被裁剪掉，这样就减少了程序在缓存、调用、 分支预测上的开销了
+Load-Time Hook/Callback 部分语言，比如 Erlang、C#(Unity) 等支持在模块、类、程序集加载时，执行某个函数，这种行为可以看作是代码加载时的一个 回调，或者说是一种受限的「加载期计算」，因为这样的计算，执行的都是编译期已经生成好的代码，无法通过在加载期间执行的运算来影响到原有的代码逻辑。
+C# (.Net) 可以在加载时，找到对应属性的程序集、类、方法、乃至字段等，然后动态修改、生成代码。 这种操作，可以算是在代码加载期间执行的 JIT 操作，而「加载期计算」更多的是强调「计算」或者说 「求值」， 但总的来说，区别不大，可以看作是一回事。
+示例，零开销配置 这里做一个简单的演示，使用 message 文本文件做为配置文件，里面的内容为:
+Hello， World! 定义函数 get-message ，直接读取整个文本文件，当作是配置读取操作：
+(defun get-message ()  (uiop:read-file-string &#34;~/message&#34;)) 定义函数 test ， 直接使用 get-message 模拟读取配置操作
+(defun test ()  (let ((msg (get-message)))  msg)) 为了防止编译器优化，这里写的很啰嗦，第三行的 msg 实际上可以看作是具体的配置操作过程，只是这里简单的用返回这个行为 来模拟
+定义一个函数 test2 ， 使用加载期计算，在代码加载时，求出 get-message 的值，然后直接写入到 test2 的代码内" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lafirest.github.io/posts/load_time_calculation/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-20T17:08:00&#43;08:00" />
+<meta property="article:modified_time" content="2022-03-20T17:08:00&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Programming Language Roam: Load-Time Calculation"/>
+<meta name="twitter:description" content="「加载期计算」，是指: 在代码加载时执行运算或者这种能力
+和 编译期计算 相比，加载期计算可能适用范围更广
+场景 加载期计算主要适用于以下的场景：
+ 程序运行时需要的某些信息，如环境变量等，无法在编译期间确定 这些信息在程序启动后几乎不会发生变化 程序运行时需要根据不同的环境信息，执行不同的运算  比较典型的场景就是跨平台应用，以及使用静态配置的应用，这些应用在真正运行前是无法获得目标平台、或者目标配置的 值。而运行后，要么对这些信息进行缓存以便反复使用，要么就是每次使用这些信息时，都重新进行一次读取/查询。
+而如果程序支持「加载期计算」，则可以在代码加载时，读取相关信息，然后直接将信息写入到调用的代码处，甚至，可以根据 信息的值来选择性生成不同的处理代码。
+这样，对于程序而言，这些信息就变成了静态的常量了，且无用的代码分支也会被裁剪掉，这样就减少了程序在缓存、调用、 分支预测上的开销了
+Load-Time Hook/Callback 部分语言，比如 Erlang、C#(Unity) 等支持在模块、类、程序集加载时，执行某个函数，这种行为可以看作是代码加载时的一个 回调，或者说是一种受限的「加载期计算」，因为这样的计算，执行的都是编译期已经生成好的代码，无法通过在加载期间执行的运算来影响到原有的代码逻辑。
+C# (.Net) 可以在加载时，找到对应属性的程序集、类、方法、乃至字段等，然后动态修改、生成代码。 这种操作，可以算是在代码加载期间执行的 JIT 操作，而「加载期计算」更多的是强调「计算」或者说 「求值」， 但总的来说，区别不大，可以看作是一回事。
+示例，零开销配置 这里做一个简单的演示，使用 message 文本文件做为配置文件，里面的内容为:
+Hello， World! 定义函数 get-message ，直接读取整个文本文件，当作是配置读取操作：
+(defun get-message ()  (uiop:read-file-string &#34;~/message&#34;)) 定义函数 test ， 直接使用 get-message 模拟读取配置操作
+(defun test ()  (let ((msg (get-message)))  msg)) 为了防止编译器优化，这里写的很啰嗦，第三行的 msg 实际上可以看作是具体的配置操作过程，只是这里简单的用返回这个行为 来模拟
+定义一个函数 test2 ， 使用加载期计算，在代码加载时，求出 get-message 的值，然后直接写入到 test2 的代码内"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Posts",
+      "item": "https://lafirest.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Programming Language Roam: Load-Time Calculation",
+      "item": "https://lafirest.github.io/posts/load_time_calculation/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Programming Language Roam: Load-Time Calculation",
+  "name": "Programming Language Roam: Load-Time Calculation",
+  "description": "「加载期计算」，是指: 在代码加载时执行运算或者这种能力\n和 编译期计算 相比，加载期计算可能适用范围更广\n场景 加载期计算主要适用于以下的场景：\n 程序运行时需要的某些信息，如环境变量等，无法在编译期间确定 这些信息在程序启动后几乎不会发生变化 程序运行时需要根据不同的环境信息，执行不同的运算  比较典型的场景就是跨平台应用，以及使用静态配置的应用，这些应用在真正运行前是无法获得目标平台、或者目标配置的 值。而运行后，要么对这些信息进行缓存以便反复使用，要么就是每次使用这些信息时，都重新进行一次读取/查询。\n而如果程序支持「加载期计算」，则可以在代码加载时，读取相关信息，然后直接将信息写入到调用的代码处，甚至，可以根据 信息的值来选择性生成不同的处理代码。\n这样，对于程序而言，这些信息就变成了静态的常量了，且无用的代码分支也会被裁剪掉，这样就减少了程序在缓存、调用、 分支预测上的开销了\nLoad-Time Hook/Callback 部分语言，比如 Erlang、C#(Unity) 等支持在模块、类、程序集加载时，执行某个函数，这种行为可以看作是代码加载时的一个 回调，或者说是一种受限的「加载期计算」，因为这样的计算，执行的都是编译期已经生成好的代码，无法通过在加载期间执行的运算来影响到原有的代码逻辑。\nC# (.Net) 可以在加载时，找到对应属性的程序集、类、方法、乃至字段等，然后动态修改、生成代码。 这种操作，可以算是在代码加载期间执行的 JIT 操作，而「加载期计算」更多的是强调「计算」或者说 「求值」， 但总的来说，区别不大，可以看作是一回事。\n示例，零开销配置 这里做一个简单的演示，使用 message 文本文件做为配置文件，里面的内容为:\nHello， World! 定义函数 get-message ，直接读取整个文本文件，当作是配置读取操作：\n(defun get-message ()  (uiop:read-file-string \u0026#34;~/message\u0026#34;)) 定义函数 test ， 直接使用 get-message 模拟读取配置操作\n(defun test ()  (let ((msg (get-message)))  msg)) 为了防止编译器优化，这里写的很啰嗦，第三行的 msg 实际上可以看作是具体的配置操作过程，只是这里简单的用返回这个行为 来模拟\n定义一个函数 test2 ， 使用加载期计算，在代码加载时，求出 get-message 的值，然后直接写入到 test2 的代码内",
+  "keywords": [
+    "Common-Lisp"
+  ],
+  "articleBody": "「加载期计算」，是指: 在代码加载时执行运算或者这种能力\n和 编译期计算 相比，加载期计算可能适用范围更广\n场景 加载期计算主要适用于以下的场景：\n 程序运行时需要的某些信息，如环境变量等，无法在编译期间确定 这些信息在程序启动后几乎不会发生变化 程序运行时需要根据不同的环境信息，执行不同的运算  比较典型的场景就是跨平台应用，以及使用静态配置的应用，这些应用在真正运行前是无法获得目标平台、或者目标配置的 值。而运行后，要么对这些信息进行缓存以便反复使用，要么就是每次使用这些信息时，都重新进行一次读取/查询。\n而如果程序支持「加载期计算」，则可以在代码加载时，读取相关信息，然后直接将信息写入到调用的代码处，甚至，可以根据 信息的值来选择性生成不同的处理代码。\n这样，对于程序而言，这些信息就变成了静态的常量了，且无用的代码分支也会被裁剪掉，这样就减少了程序在缓存、调用、 分支预测上的开销了\nLoad-Time Hook/Callback 部分语言，比如 Erlang、C#(Unity) 等支持在模块、类、程序集加载时，执行某个函数，这种行为可以看作是代码加载时的一个 回调，或者说是一种受限的「加载期计算」，因为这样的计算，执行的都是编译期已经生成好的代码，无法通过在加载期间执行的运算来影响到原有的代码逻辑。\nC# (.Net) 可以在加载时，找到对应属性的程序集、类、方法、乃至字段等，然后动态修改、生成代码。 这种操作，可以算是在代码加载期间执行的 JIT 操作，而「加载期计算」更多的是强调「计算」或者说 「求值」， 但总的来说，区别不大，可以看作是一回事。\n示例，零开销配置 这里做一个简单的演示，使用 message 文本文件做为配置文件，里面的内容为:\nHello， World! 定义函数 get-message ，直接读取整个文本文件，当作是配置读取操作：\n(defun get-message ()  (uiop:read-file-string \"~/message\")) 定义函数 test ， 直接使用 get-message 模拟读取配置操作\n(defun test ()  (let ((msg (get-message)))  msg)) 为了防止编译器优化，这里写的很啰嗦，第三行的 msg 实际上可以看作是具体的配置操作过程，只是这里简单的用返回这个行为 来模拟\n定义一个函数 test2 ， 使用加载期计算，在代码加载时，求出 get-message 的值，然后直接写入到 test2 的代码内\n(eval-when (:load-toplevel)  (let ((msg (get-message)))  (defun test2 ()  (let ((in-msg `，msg))  in-msg)))) 现在来看， test 生成的汇编代码:\n;disassembly for RT::TEST ;Size: 40 bytes. Origin: #x5359C06C RT::TEST ;6C: 498B4510 MOV RAX， [R13+16] thread.binding-stack-pointer ;70: 488945F8 MOV [RBP-8]， RAX ;74: 4883EC10 SUB RSP， 16 ;78: 31C9 XOR ECX， ECX ;7A: 48892C24 MOV [RSP]， RBP ;7E: 488BEC MOV RBP， RSP ;81: B8A2C73E50 MOV EAX， #x503EC7A2 #;86: FFD0 CALL RAX ;88: 480F42E3 CMOVB RSP， RBX ;8C: 488BE5 MOV RSP， RBP ;8F: F8 CLC ;90: 5D POP RBP ;91: C3 RET ;92: CC10 INT3 16 Invalid argument count trap 可以看到， test 调用了 get-message ，且整个执行过程指令很多，一直到 91 处才 RET\n然后， test2 的汇编代码:\n;disassembly for RT::TEST2 ;Size: 38 bytes. Origin: #x535D21F0 RT::TEST2 ;1F0: 498B4510 MOV RAX， [R13+16] thread.binding-stack-pointer ;1F4: 488945F0 MOV [RBP-16]， RAX ;1F8: 488BE5 MOV RSP， RBP ;1FB: F8 CLC ;1FC: 5D POP RBP ;1FD: C3 RET ;1FE: L0: FF24255800A052 JMP QWORD PTR [#x52A00058] ALLOC-TRAMP ;205: CC10 INT3 16 Invalid argument count trap ;207: 6A20 PUSH 32 ;209: E8F0FFFFFF CALL L0 ;20E: 5E POP RSI ;20F: E976FFFFFF JMP #x535D218A ;214: CC10 INT3 16 Invalid argument count trap 可以看到， test2 中没有调用 get-message 函数，且在 1FD 处就已经 RET 了，整个执行过程实际上只有一条 MOV 指令，用于把常量区的文本地址拷贝到寄存器中。\n上面的示例比较简单，实际上使用时，可以实现的很复杂，比如跨平台应用，如果不想针对不同的平台进行单独打包，希望一个包 可以运行在所用平台上，但又不想在代码执行时不断的做平台判断，就可以使用加载期计算，在代码加载时，读取当前的平台信息， 然后使用和上面示例中一样的方法，只生成/插入对应平台的代码就行。\n另外一些有趣的应用，可以看作是手动 JIT，如果程序运行时，会生成一些统计信息，比如各个分支的成功概率等，那么下次代码重新 加载时，可以读取进行信息，然后重新优化分支顺序，提高分支预测的成功率等。\n",
+  "wordCount" : "266",
+  "inLanguage": "en",
+  "datePublished": "2022-03-20T17:08:00+08:00",
+  "dateModified": "2022-03-20T17:08:00+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "firest"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://lafirest.github.io/posts/load_time_calculation/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Cogito, ergo sum",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://lafirest.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://lafirest.github.io" accesskey="h" title="Cogito, ergo sum (Alt + H)">Cogito, ergo sum</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://lafirest.github.io/archives/" title="Archives">
+                    <span>Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://lafirest.github.io/categories/" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://lafirest.github.io/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://lafirest.github.io">Home</a>&nbsp;»&nbsp;<a href="https://lafirest.github.io/posts/">Posts</a></div>
+    <h1 class="post-title">
+      Programming Language Roam: Load-Time Calculation
+    </h1>
+    <div class="post-meta"><span title='2022-03-20 17:08:00 +0800 CST'>March 20, 2022</span>&nbsp;·&nbsp;firest
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e5%9c%ba%e6%99%af" aria-label="场景">场景</a></li>
+                <li>
+                    <a href="#load-time-hook-callback" aria-label="Load-Time Hook/Callback">Load-Time Hook/Callback</a></li>
+                <li>
+                    <a href="#%e7%a4%ba%e4%be%8b-%e9%9b%b6%e5%bc%80%e9%94%80%e9%85%8d%e7%bd%ae" aria-label="示例，零开销配置">示例，零开销配置</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>「加载期计算」，是指: <strong>在代码加载时执行运算或者这种能力</strong></p>
+<p>和 <a href="/posts/compile_time_calculation/">编译期计算</a> 相比，加载期计算可能适用范围更广</p>
+<h2 id="场景">场景<a hidden class="anchor" aria-hidden="true" href="#场景">#</a></h2>
+<p>加载期计算主要适用于以下的场景：</p>
+<ol>
+<li>程序运行时需要的某些信息，如环境变量等，无法在编译期间确定</li>
+<li>这些信息在程序启动后几乎不会发生变化</li>
+<li>程序运行时需要根据不同的环境信息，执行不同的运算</li>
+</ol>
+<p>比较典型的场景就是跨平台应用，以及使用静态配置的应用，这些应用在真正运行前是无法获得目标平台、或者目标配置的
+值。而运行后，要么对这些信息进行缓存以便反复使用，要么就是每次使用这些信息时，都重新进行一次读取/查询。</p>
+<p>而如果程序支持「加载期计算」，则可以在代码加载时，读取相关信息，然后直接将信息写入到调用的代码处，甚至，可以根据
+信息的值来选择性生成不同的处理代码。</p>
+<p>这样，对于程序而言，这些信息就变成了静态的常量了，且无用的代码分支也会被裁剪掉，这样就减少了程序在缓存、调用、
+分支预测上的开销了</p>
+<h2 id="load-time-hook-callback">Load-Time Hook/Callback<a hidden class="anchor" aria-hidden="true" href="#load-time-hook-callback">#</a></h2>
+<p>部分语言，比如 Erlang、C#(Unity) 等支持在模块、类、程序集加载时，执行某个函数，这种行为可以看作是代码加载时的一个
+回调，或者说是一种受限的「加载期计算」，因为这样的计算，执行的都是编译期已经生成好的代码，无法通过在加载期间执行的运算来影响到原有的代码逻辑。</p>
+<p>C# (.Net) 可以在加载时，找到对应属性的程序集、类、方法、乃至字段等，然后动态修改、生成代码。
+这种操作，可以算是在代码加载期间执行的 JIT 操作，而「加载期计算」更多的是强调「计算」或者说 「求值」，
+但总的来说，区别不大，可以看作是一回事。</p>
+<h2 id="示例-零开销配置">示例，零开销配置<a hidden class="anchor" aria-hidden="true" href="#示例-零开销配置">#</a></h2>
+<p>这里做一个简单的演示，使用 <em>message</em> 文本文件做为配置文件，里面的内容为:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Hello， World!
+</span></span></code></pre></div><p>定义函数 <em>get-message</em> ，直接读取整个文本文件，当作是配置读取操作：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-lisp" data-lang="lisp"><span style="display:flex;"><span>(defun get-message ()
+</span></span><span style="display:flex;"><span>  (uiop:read-file-string <span style="color:#e6db74">&#34;~/message&#34;</span>))
+</span></span></code></pre></div><p>定义函数 <em>test</em> ， 直接使用 <em>get-message</em> 模拟读取配置操作</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-lisp" data-lang="lisp"><span style="display:flex;"><span>(defun test ()
+</span></span><span style="display:flex;"><span>  (<span style="color:#66d9ef">let</span> ((msg (get-message)))
+</span></span><span style="display:flex;"><span>    msg))
+</span></span></code></pre></div><p>为了防止编译器优化，这里写的很啰嗦，第三行的 <em>msg</em> 实际上可以看作是具体的配置操作过程，只是这里简单的用返回这个行为
+来模拟</p>
+<p>定义一个函数 <em>test2</em> ， 使用加载期计算，在代码加载时，求出 <em>get-message</em> 的值，然后直接写入到 <em>test2</em> 的代码内</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-lisp" data-lang="lisp"><span style="display:flex;"><span>(<span style="color:#66d9ef">eval-when</span> (<span style="color:#e6db74">:load-toplevel</span>)
+</span></span><span style="display:flex;"><span>  (<span style="color:#66d9ef">let</span> ((msg (get-message)))
+</span></span><span style="display:flex;"><span>    (defun test2 ()
+</span></span><span style="display:flex;"><span>      (<span style="color:#66d9ef">let</span> ((in-msg <span style="color:#f92672">`</span><span style="color:#960050;background-color:#1e0010">，</span>msg))
+</span></span><span style="display:flex;"><span>        in-msg))))
+</span></span></code></pre></div><p>现在来看， <em>test</em> 生成的汇编代码:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-asm" data-lang="asm"><span style="display:flex;"><span><span style="color:#75715e">;disassembly for RT::TEST
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;Size: 40 bytes. Origin: #x5359C06C                           RT::TEST
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;6C:       498B4510         MOV RAX， [R13+16]                 thread.binding-stack-pointer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;70:       488945F8         MOV [RBP-8]， RAX
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;74:       4883EC10         SUB RSP， 16
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;78:       31C9             XOR ECX， ECX
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;7A:       48892C24         MOV [RSP]， RBP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;7E:       488BEC           MOV RBP， RSP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;81:       B8A2C73E50       MOV EAX， #x503EC7A2               #&lt;FDEFN RT::GET-MESSAGE&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;86:       FFD0             CALL RAX
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;88:       480F42E3         CMOVB RSP， RBX
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;8C:       488BE5           MOV RSP， RBP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;8F:       F8               CLC
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;90:       5D               POP RBP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;91:       C3               RET
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;92:       CC10             INT3 16                           Invalid argument count trap
+</span></span></span></code></pre></div><p>可以看到， <em>test</em> 调用了 <em>get-message</em> ，且整个执行过程指令很多，一直到 <em>91</em> 处才 <em>RET</em></p>
+<p>然后， <em>test2</em> 的汇编代码:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-asm" data-lang="asm"><span style="display:flex;"><span><span style="color:#75715e">;disassembly for RT::TEST2
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;Size: 38 bytes. Origin: #x535D21F0                           RT::TEST2
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1F0:       498B4510         MOV RAX， [R13+16]                thread.binding-stack-pointer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1F4:       488945F0         MOV [RBP-16]， RAX
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1F8:       488BE5           MOV RSP， RBP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1FB:       F8               CLC
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1FC:       5D               POP RBP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1FD:       C3               RET
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;1FE: L0:   FF24255800A052   JMP QWORD PTR [#x52A00058]       ALLOC-TRAMP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;205:       CC10             INT3 16                          Invalid argument count trap
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;207:       6A20             PUSH 32
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;209:       E8F0FFFFFF       CALL L0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;20E:       5E               POP RSI
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;20F:       E976FFFFFF       JMP #x535D218A
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">;214:       CC10             INT3 16                          Invalid argument count trap
+</span></span></span></code></pre></div><p>可以看到， <em>test2</em> 中没有调用 <em>get-message</em> 函数，且在 <em>1FD</em> 处就已经 <em>RET</em> 了，整个执行过程实际上只有一条
+<em>MOV</em> 指令，用于把常量区的文本地址拷贝到寄存器中。</p>
+<p>上面的示例比较简单，实际上使用时，可以实现的很复杂，比如跨平台应用，如果不想针对不同的平台进行单独打包，希望一个包
+可以运行在所用平台上，但又不想在代码执行时不断的做平台判断，就可以使用加载期计算，在代码加载时，读取当前的平台信息，
+然后使用和上面示例中一样的方法，只生成/插入对应平台的代码就行。</p>
+<p>另外一些有趣的应用，可以看作是手动 JIT，如果程序运行时，会生成一些统计信息，比如各个分支的成功概率等，那么下次代码重新
+加载时，可以读取进行信息，然后重新优化分支顺序，提高分支预测的成功率等。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://lafirest.github.io/tags/common-lisp/">Common-Lisp</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="https://lafirest.github.io/posts/compile_time_calculation/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Programming Language Roam: 编译期计算</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2022 <a href="https://lafirest.github.io">Cogito, ergo sum</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>
