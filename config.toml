@@ -1,4 +1,5 @@
 baseURL = 'https://lafirest.github.io'
+publishDir = "docs"
 languageCode = 'zh-CN'
 title = 'Cogito, ergo sum'
 paginate = 5

@@ -146,6 +146,26 @@
 
 <article class="post-entry"> 
   <header class="entry-header">
+    <h2>Programming Language Roam: Van Laarhoven lens
+    </h2>
+  </header>
+  <section class="entry-content">
+    <p>lens 是一种函数式引用，可以实现对数据的任意部分进行访问和修改，宽松点说，lens 可以看作是一种函数式「指针」。 现在最常用的 lens 实现是由 Twan van Laarhoven 发明的 CPS based functional references，原理虽然很简单， 但却相当惊艳。
+这篇算是我自己的复习吧，将需要的概念都简单温习下。
+getter and setter 任何一个可以读写的数据都至少有两个操作:读和写，对数据的读和写进行封装，以函数的方式对外提供的操作一般称作「getter」和「setter」。 之所以需要对读/写进行封装，是因为很多场景下，数据的写入往往伴随着一定的副作用，而对读进行封装，则可以实现延迟计算、单例模型 等功能。大部分现代编程语言，比如 C#，都在语法层面提供了简洁的 getter/setter 支持
+immutable object 和 函数式语言 在部分编程语言中存在不可变对象，比如在区分「值类型」和「引用类型」的编程语言中，值类型一般就是不可变的。对不可变对象 进行更新操作，一般都是先复制出一个新的副本，然后将更新的值作用在这个副本之上，从而得到更新后的对象。而在大多数函数式语言中， 任何对象几乎都是不可变的。
+不可变特性导致了一个很难受的问题：对复杂数据，尤其是层级很深的数据进行更新将是灾难性的，每次更新实际上都需要从当前层级 一直向上更新到根层级，这导致了更新的代码十分冗长。
+所以有没有一种简单的方式，可以像 Cee 的指针，或者 C&#43;&#43; 的引用那样，对任意层级的任意数据进行访问和更新？
+基于这种需求，lens 技术诞生了
+最原始而朴素的 lens 最早期的 lens 技术十分朴素：将 getter 和 setter 放在一个元组中
+type getter&lt;&#39;s, &#39;a&gt; = &#39;s -&gt; &#39;a type setter&lt;&#39;s, &#39;a&gt; = &#39;s -&gt; &#39;a -&gt; &#39;s type lens = getter * setter 当需要对一个字段进行操作时，只需要将从根目录到该字段沿途所有的这种 lens 元组，进行函数复合即可。...</p>
+  </section>
+  <footer class="entry-footer"><span title='2022-04-20 23:13:00 +0800 CST'>April 20, 2022</span>&nbsp;·&nbsp;firest</footer>
+  <a class="entry-link" aria-label="post link to Programming Language Roam: Van Laarhoven lens" href="https://lafirest.github.io/posts/van_laarhoven_lens/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
     <h2>Programming Language Roam: Load-Time Calculation
     </h2>
   </header>
