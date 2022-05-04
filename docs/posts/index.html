@@ -146,6 +146,25 @@
 
 <article class="post-entry"> 
   <header class="entry-header">
+    <h2>Programming Language Roam: Isomorphism Lens
+    </h2>
+  </header>
+  <section class="entry-content">
+    <p>isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。
+这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。
+定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:
+ A lens from type a to b is a bijection between a and a pair of b and some residual r.
+ 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分
+简单解释下:
+  设类型 a 为一个集合，集合内各个元素为其字段
+  b 为 a 中的一个字段...</p>
+  </section>
+  <footer class="entry-footer"><span title='2022-05-04 17:00:00 +0800 CST'>May 4, 2022</span>&nbsp;·&nbsp;firest</footer>
+  <a class="entry-link" aria-label="post link to Programming Language Roam: Isomorphism Lens" href="https://lafirest.github.io/posts/isomorphism_lens/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
     <h2>Programming Language Roam: Van Laarhoven lens
     </h2>
   </header>
@@ -219,23 +238,11 @@ Common Lisp 和 编译期计算 C&#43;&#43;11 引入了一个关键字 constexpr
   <footer class="entry-footer"><span title='2021-07-12 02:40:30 +0800 CST'>July 12, 2021</span>&nbsp;·&nbsp;firest</footer>
   <a class="entry-link" aria-label="post link to 通过C#理解Monad" href="https://lafirest.github.io/posts/intro_monad_csharp/"></a>
 </article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2>关于消息路由表实现的思考
-    </h2>
-  </header>
-  <section class="entry-content">
-    <p>根和叶 消息队列、文件系统、网络路由等场景经常需要处理路由信息，一般都是由路径节点名和分隔符做成,比如: /usr/lib/apache2/modules/httpd.exp /topic/who/am/i  实际上这种结构，可以看作是从树的根节点到某个叶子节点的完整路径，也就是说这种结构的集合是一棵树然后加上路由信息常见使用场景都涉及到匹配，所以大多数情况，这里数据往往被实现为字典树
-也许我们不太合适? 但我总感觉这种结构实现为字典树并不太好，路由信息和字典树应用对象有些很明显的不同: 单词的长度是可预期的，并不会太长。但路由信息是不能预期长度的，可能会导致树的高度失控，当出现大量长路径且公共祖先遥远的情况下，树可能就退化为了链表 单词的基本单元是字符，是一个有限集，且西文情况下，这个集合很小，字典树结构能很好的进行处理。而路由信息的基本单元是单词，可以说是一个无限集，这里又有两种情况: 坚持以单词为基本单元(相当于压缩字典树)，这个时候每个节点需要引入一个离散映射结构，用来存储 单词 → 节点 的信息这将导致内存耗用变得难以预测，还有一点就是如果每个节点的数据量不大，在某些离散映射的实现里，可能也会退化为线性搜索 以字符为基本单元，但这种情况下西文字符集一般是不够用的，所以常见的做法是转换为字节流进行处理每个节点需要256个槽，这对于字典来说还好，但是对于路由信息来说，内存耗用可能会变得难以接受，这种情况开源使用自适应基数树进行解决。缺点就是数据调整时可能除非自适应调整，另外一个很严重的问题就是，路由信息的行为上主要还是以分隔符分割出来的单词作为基本单元，如果以字符为基本单元，进行模式匹配时，处理时稍微复杂些    还可以挽回么? 自动机 自动机应该可以实现路由结构，而且搜索性能可能比上面的字典树实现都要快，但内存耗用也应该更加夸张，暂时不考虑
-平坦化结构 这种方法实现逻辑如下:
- 每条消息路由的，每个从根节点出发的子路径都创建一个映射 映射的实现有两种:例子: /i/am/some/topic   只包含自己的直接子节点 这种情况下，对子树的搜索会以递归的方式完成
-   key value     i am   i/am some   i/am/some topic   i/am/some/topic _      包含自己的直接子节点和所有后代节点 这种情况下，能很好的完成对某个层级的所有节点的匹配，同时又能很方便的找到所有后代节点
-   id key child desc     1 i am 2, 3, 4   2 i/am some 3, 4   3 i/am/some topic 4   4 i/am/some/topic _ _        这种方式能够很好的处理路由直接查找和子树查找，缺点就是内存耗用比较大...</p>
-  </section>
-  <footer class="entry-footer"><span title='2021-07-05 00:03:00 +0800 CST'>July 5, 2021</span>&nbsp;·&nbsp;firest</footer>
-  <a class="entry-link" aria-label="post link to 关于消息路由表实现的思考" href="https://lafirest.github.io/posts/topic_tree/"></a>
-</article>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="next" href="https://lafirest.github.io/posts/page/2/">Next Page »</a>
+  </nav>
+</footer>
     </main>
     
 <footer class="footer">

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Programming Language Roam: Isomorphism Lens | Cogito, ergo sum</title>
+<meta name="keywords" content="fsharp" />
+<meta name="description" content="isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。
+这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。
+定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:
+ A lens from type a to b is a bijection between a and a pair of b and some residual r.
+ 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分
+简单解释下:
+  设类型 a 为一个集合，集合内各个元素为其字段
+  b 为 a 中的一个字段">
+<meta name="author" content="firest">
+<link rel="canonical" href="https://lafirest.github.io/posts/isomorphism_lens/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.48a18943c2fc15c38a372b8dde1f5e5dc0bc64fa6cb90f5a817d2f8c76b7f3ae.css" integrity="sha256-SKGJQ8L8FcOKNyuN3h9eXcC8ZPpsuQ9agX0vjHa3864=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.4dcb3c4f38462f66c6b6137227726f5543cb934cca9788f041c087e374491df2.js" integrity="sha256-Tcs8TzhGL2bGthNyJ3JvVUPLk0zKl4jwQcCH43RJHfI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://lafirest.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://lafirest.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://lafirest.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://lafirest.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://lafirest.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Programming Language Roam: Isomorphism Lens" />
+<meta property="og:description" content="isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。
+这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。
+定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:
+ A lens from type a to b is a bijection between a and a pair of b and some residual r.
+ 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分
+简单解释下:
+  设类型 a 为一个集合，集合内各个元素为其字段
+  b 为 a 中的一个字段" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lafirest.github.io/posts/isomorphism_lens/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-05-04T17:00:00&#43;08:00" />
+<meta property="article:modified_time" content="2022-05-04T17:00:00&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Programming Language Roam: Isomorphism Lens"/>
+<meta name="twitter:description" content="isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。
+这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。
+定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:
+ A lens from type a to b is a bijection between a and a pair of b and some residual r.
+ 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分
+简单解释下:
+  设类型 a 为一个集合，集合内各个元素为其字段
+  b 为 a 中的一个字段"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Posts",
+      "item": "https://lafirest.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  3 ,
+      "name": "Programming Language Roam: Isomorphism Lens",
+      "item": "https://lafirest.github.io/posts/isomorphism_lens/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Programming Language Roam: Isomorphism Lens",
+  "name": "Programming Language Roam: Isomorphism Lens",
+  "description": "isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。\n这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。\n定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:\n A lens from type a to b is a bijection between a and a pair of b and some residual r.\n 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分\n简单解释下:\n  设类型 a 为一个集合，集合内各个元素为其字段\n  b 为 a 中的一个字段",
+  "keywords": [
+    "fsharp"
+  ],
+  "articleBody": "isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。\n这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。\n定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:\n A lens from type a to b is a bijection between a and a pair of b and some residual r.\n 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分\n简单解释下:\n  设类型 a 为一个集合，集合内各个元素为其字段\n  b 为 a 中的一个字段\n  则 r = a - {b}\n  lens 为一个双射/同构, 由两个互逆函数 f 和 b 组成\nf : a - (b, r)\nb : (b, r) - a\n  因此这种 lens 被称作同构 lens\n作者为了便于理解，特意制作了一副示意图: 结合图片，就可以十分简单明了的重新定义访问和更新了\n 访问 将元素 b 从集合 a 中拿出来，得到 b 和 余集 r 更新 将更新后的元素 b 加入到余集 r 中，就得到更新后的新集合 a  在代码中的定义 type ISO'a,'b = ('a - 'b) * ('b - 'a) type Lens'a, 'b, 'r = Lens of ISO'a, 'b * 'r get/set 的实现 get let get (Lens iso) = fst iso  fst get 的实现比较简单，取出 ISO 结构中的 (a - b) 然后 和 fst 函数复合就可以了\n更加详细易于理解的代码如下:\nlet get (Lens iso) =  let f = fst iso // 取出元组中的 a - b 部分，绑定到变量 f 上  fun a - // 返回 getter 函数, getter : a - b  let pair = f a // 将 a 应用到函数 f 上  fst pair // 从 (b, r) 中取出 b set 的实现 let first f (a, b) =  (f a, b)  let private mkConst a b = a  let modify (Lens iso) f = fst iso  first f  snd iso let put l a = modify l (mkConst a) set 的实现是先取出 (b, r)，然后将更新函数 f 应用到 b 上，最后将得到的结果应用到 ISO 的 (b, r) - a 上\n同上，详细的代码如下:\nlet moify (Lens iso) f =  let f1 = fst iso // 取出 a - (b, r) 部分  let f2 = // 复合更新函数 f，将结果绑定到变量 f2 上, f2 : a - (b, r)  fun a -  let (b, r) = f1 a  (f b, r)  let w = snd iso // 取出更新函数 w : (b, r) - a  fun a - // 返回 setter : b - a  let res = f2 a // 将 a 作用到 f2 上，实现对 b 的更新  w res // 将 res : (b, r) 应用到 w 上，得到更新后的 a 示例 示例和上次一样，演示对深层嵌套结构的更新，在这种情况下 isomorphism lens 在自由组合上，不如 van laarhoven lens 方便\nopen Lens  // 定义需要更新的数据类型 type Skill = {  Damage : int  }  type Monster = {  Name : string  Skill : Skill  }  // 定义 Monster - Skill 的 a - (b, r) 部分 let fwm m = (m.Skill, fun s - {m with Skill = s})  // 定义 Skill - Damage 的 a - (b, r) 部分 let fws s = (s.Damage, fun d - {s with Damage = d})  // 在 record 的更新这种情况下, (b, r) - a 是一个通用的函数 let bw (l, r) = r l  // lens 的复合 // 可以看见，在处理 record 这种情况下 // isomorphism lens 的复合 比 van laarhoven lens 麻烦些 // 但是比朴素的 (getter, setter) 元组又要简便许多 // 在处理 tuple 或者数据本身就存在同构时, isomorphism lens 的复合则会十分简单 let com f1 f2 s =  let (s2, r1) = f1 s  let (s3, r2) = f2 s2  (s3, r2  r1)  // 得到 Monster - Damage 的 lens let lens = Lens (com fwm fws, bw)  let monster = {Name = \"A\"; Skill = {Damage = 12}}  // 访问 get lens monster | printfn \"Damage is:%O\"  // 更新 put lens 33 monster | printfn \"New Monster is:%O\" 结果:\nDamage is:12 New Monster is:{ Name = \"A\"  Skill = { Damage = 33 } } ",
+  "wordCount" : "568",
+  "inLanguage": "en",
+  "datePublished": "2022-05-04T17:00:00+08:00",
+  "dateModified": "2022-05-04T17:00:00+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "firest"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://lafirest.github.io/posts/isomorphism_lens/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Cogito, ergo sum",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://lafirest.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://lafirest.github.io" accesskey="h" title="Cogito, ergo sum (Alt + H)">Cogito, ergo sum</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://lafirest.github.io/archives/" title="Archives">
+                    <span>Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://lafirest.github.io/categories/" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://lafirest.github.io/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://lafirest.github.io">Home</a>&nbsp;»&nbsp;<a href="https://lafirest.github.io/posts/">Posts</a></div>
+    <h1 class="post-title">
+      Programming Language Roam: Isomorphism Lens
+    </h1>
+    <div class="post-meta"><span title='2022-05-04 17:00:00 +0800 CST'>May 4, 2022</span>&nbsp;·&nbsp;firest
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e5%ae%9a%e4%b9%89" aria-label="定义">定义</a><ul>
+                        
+                <li>
+                    <a href="#%e5%9c%a8%e4%bb%a3%e7%a0%81%e4%b8%ad%e7%9a%84%e5%ae%9a%e4%b9%89" aria-label="在代码中的定义">在代码中的定义</a></li></ul>
+                </li>
+                <li>
+                    <a href="#get-set-%e7%9a%84%e5%ae%9e%e7%8e%b0" aria-label="get/set 的实现">get/set 的实现</a><ul>
+                        
+                <li>
+                    <a href="#get" aria-label="get">get</a></li>
+                <li>
+                    <a href="#set-%e7%9a%84%e5%ae%9e%e7%8e%b0" aria-label="set 的实现">set 的实现</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e7%a4%ba%e4%be%8b" aria-label="示例">示例</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>isomorphism lens 是 Twan van Laarhoven 继 「<a href="/posts/van_laarhoven_lens/">Van Laarhoven Lens</a>」后发明的一种新的 lens 实现。</p>
+<p>这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。</p>
+<h2 id="定义">定义<a hidden class="anchor" aria-hidden="true" href="#定义">#</a></h2>
+<p>isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:</p>
+<blockquote>
+<p>A lens from type a to b is a bijection between a and a pair of b and some residual r.</p>
+</blockquote>
+<p>翻译过来就是: <strong>一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分</strong></p>
+<p>简单解释下:</p>
+<ol>
+<li>
+<p>设类型 a 为一个集合，集合内各个元素为其字段</p>
+</li>
+<li>
+<p>b 为 a 中的一个字段</p>
+</li>
+<li>
+<p>则 r = a - {b}</p>
+</li>
+<li>
+<p>lens 为一个双射/同构, 由两个互逆函数 f 和 b 组成</p>
+<p>f : a -&gt; (b, r)</p>
+<p>b : (b, r) -&gt; a</p>
+</li>
+</ol>
+<p>因此这种 lens 被称作同构 lens</p>
+<p>作者为了便于理解，特意制作了一副示意图:
+<img loading="lazy" src="https://www.twanvl.nl/image/lens/isolens1.png" alt=""  />
+</p>
+<p>结合图片，就可以十分简单明了的重新定义访问和更新了</p>
+<dl>
+<dt>访问</dt>
+<dd>将元素 b 从集合 a 中拿出来，得到 b 和 余集 r</dd>
+<dt>更新</dt>
+<dd>将更新后的元素 b 加入到余集 r 中，就得到更新后的新集合 a</dd>
+</dl>
+<h3 id="在代码中的定义">在代码中的定义<a hidden class="anchor" aria-hidden="true" href="#在代码中的定义">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fsharp" data-lang="fsharp"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">ISO</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">&#39;</span>a<span style="color:#f92672">,</span><span style="color:#66d9ef">&#39;</span>b<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">&#39;</span>a <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">&#39;</span>b<span style="color:#f92672">)</span> <span style="color:#f92672">*</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">&#39;</span>b <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">&#39;</span>a<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Lens</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">&#39;</span>a<span style="color:#f92672">,</span> <span style="color:#66d9ef">&#39;</span>b<span style="color:#f92672">,</span> <span style="color:#66d9ef">&#39;</span>r<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> Lens <span style="color:#66d9ef">of</span> ISO<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">&#39;</span>a<span style="color:#f92672">,</span> <span style="color:#66d9ef">&#39;</span>b <span style="color:#f92672">*</span> <span style="color:#66d9ef">&#39;</span>r<span style="color:#f92672">&gt;</span>
+</span></span></code></pre></div><h2 id="get-set-的实现">get/set 的实现<a hidden class="anchor" aria-hidden="true" href="#get-set-的实现">#</a></h2>
+<h3 id="get">get<a hidden class="anchor" aria-hidden="true" href="#get">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fsharp" data-lang="fsharp"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> get <span style="color:#f92672">(</span>Lens iso<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> fst iso <span style="color:#f92672">&gt;&gt;</span> fst
+</span></span></code></pre></div><p>get 的实现比较简单，取出 ISO 结构中的 (a -&gt; b) 然后 和 fst 函数复合就可以了</p>
+<p>更加详细易于理解的代码如下:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fsharp" data-lang="fsharp"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> get <span style="color:#f92672">(</span>Lens iso<span style="color:#f92672">)</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> f <span style="color:#f92672">=</span> fst iso      <span style="color:#75715e">// 取出元组中的 a -&gt; b 部分，绑定到变量 f 上
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">fun</span> a <span style="color:#f92672">-&gt;</span>             <span style="color:#75715e">// 返回 getter 函数, getter : a -&gt; b
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">let</span> pair <span style="color:#f92672">=</span> f a   <span style="color:#75715e">// 将 a 应用到函数 f 上
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        fst pair         <span style="color:#75715e">// 从 (b, r) 中取出 b
+</span></span></span></code></pre></div><h3 id="set-的实现">set 的实现<a hidden class="anchor" aria-hidden="true" href="#set-的实现">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fsharp" data-lang="fsharp"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> first f <span style="color:#f92672">(</span>a<span style="color:#f92672">,</span> b<span style="color:#f92672">)</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">(</span>f a<span style="color:#f92672">,</span> b<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> private mkConst a b <span style="color:#f92672">=</span> a
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> modify <span style="color:#f92672">(</span>Lens iso<span style="color:#f92672">)</span> f <span style="color:#f92672">=</span> fst iso <span style="color:#f92672">&gt;&gt;</span> first f <span style="color:#f92672">&gt;&gt;</span> snd iso
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> put l a <span style="color:#f92672">=</span> modify l <span style="color:#f92672">(</span>mkConst a<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>set 的实现是先取出 (b, r)，然后将更新函数 f 应用到 b 上，最后将得到的结果应用到 ISO 的 (b, r) -&gt; a 上</p>
+<p>同上，详细的代码如下:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fsharp" data-lang="fsharp"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> moify <span style="color:#f92672">(</span>Lens iso<span style="color:#f92672">)</span> f <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> f1 <span style="color:#f92672">=</span> fst iso  <span style="color:#75715e">// 取出 a -&gt; (b, r) 部分
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">let</span> f2 <span style="color:#f92672">=</span>          <span style="color:#75715e">// 复合更新函数 f，将结果绑定到变量 f2 上, f2 : a -&gt; (b, r)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">fun</span> a <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">let</span> <span style="color:#f92672">(</span>b<span style="color:#f92672">,</span> r<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> f1 a
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">(</span>f b<span style="color:#f92672">,</span> r<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> w <span style="color:#f92672">=</span> snd iso   <span style="color:#75715e">// 取出更新函数 w : (b, r) -&gt; a
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">fun</span> a <span style="color:#f92672">-&gt;</span>          <span style="color:#75715e">// 返回 setter : b -&gt; a
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">let</span> res <span style="color:#f92672">=</span> f2 a  <span style="color:#75715e">// 将 a 作用到 f2 上，实现对 b 的更新
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        w res           <span style="color:#75715e">// 将 res : (b, r) 应用到 w 上，得到更新后的 a
+</span></span></span></code></pre></div><h2 id="示例">示例<a hidden class="anchor" aria-hidden="true" href="#示例">#</a></h2>
+<p>示例和上次一样，演示对深层嵌套结构的更新，在这种情况下 isomorphism lens 在自由组合上，不如 van laarhoven lens 方便</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fsharp" data-lang="fsharp"><span style="display:flex;"><span><span style="color:#66d9ef">open</span> Lens
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义需要更新的数据类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Skill</span> <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    Damage <span style="color:#f92672">:</span> int
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Monster</span> <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    Name <span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    Skill <span style="color:#f92672">:</span> Skill
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义 Monster -&gt; Skill 的 a -&gt; (b, r) 部分
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> fwm m <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>m<span style="color:#f92672">.</span>Skill<span style="color:#f92672">,</span> <span style="color:#66d9ef">fun</span> s <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>m <span style="color:#66d9ef">with</span> Skill <span style="color:#f92672">=</span> s<span style="color:#f92672">})</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义 Skill -&gt; Damage 的 a -&gt; (b, r) 部分
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> fws s <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>s<span style="color:#f92672">.</span>Damage<span style="color:#f92672">,</span> <span style="color:#66d9ef">fun</span> d <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>s <span style="color:#66d9ef">with</span> Damage <span style="color:#f92672">=</span> d<span style="color:#f92672">})</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 在 record 的更新这种情况下, (b, r) -&gt; a 是一个通用的函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> bw <span style="color:#f92672">(</span>l<span style="color:#f92672">,</span> r<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> r l
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// lens 的复合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 可以看见，在处理 record 这种情况下
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// isomorphism lens 的复合 比 van laarhoven lens 麻烦些
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 但是比朴素的 (getter, setter) 元组又要简便许多
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 在处理 tuple 或者数据本身就存在同构时, isomorphism lens 的复合则会十分简单
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> com f1 f2 s <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#f92672">(</span>s2<span style="color:#f92672">,</span> r1<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> f1 s
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#f92672">(</span>s3<span style="color:#f92672">,</span> r2<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> f2 s2
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">(</span>s3<span style="color:#f92672">,</span> r2 <span style="color:#f92672">&gt;&gt;</span> r1<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 得到 Monster -&gt; Damage 的 lens
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> lens <span style="color:#f92672">=</span> Lens <span style="color:#f92672">(</span>com fwm fws<span style="color:#f92672">,</span> bw<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> monster <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>Name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;A&#34;</span><span style="color:#f92672">;</span> Skill <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>Damage <span style="color:#f92672">=</span> 12<span style="color:#f92672">}}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 访问
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>get lens monster <span style="color:#f92672">|&gt;</span> printfn <span style="color:#e6db74">&#34;Damage is:%O&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 更新
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>put lens 33 monster <span style="color:#f92672">|&gt;</span> printfn <span style="color:#e6db74">&#34;New Monster is:%O&#34;</span>
+</span></span></code></pre></div><p>结果:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Damage is:12
+</span></span><span style="display:flex;"><span>New Monster is:<span style="color:#f92672">{</span> Name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;A&#34;</span>
+</span></span><span style="display:flex;"><span>                 Skill <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> Damage <span style="color:#f92672">=</span> <span style="color:#ae81ff">33</span> <span style="color:#f92672">}</span> <span style="color:#f92672">}</span>
+</span></span></code></pre></div>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://lafirest.github.io/tags/fsharp/">fsharp</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="https://lafirest.github.io/posts/van_laarhoven_lens/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Programming Language Roam: Van Laarhoven lens</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2022 <a href="https://lafirest.github.io">Cogito, ergo sum</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

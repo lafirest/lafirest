@@ -131,6 +131,25 @@
 
 <article class="post-entry tag-entry"> 
   <header class="entry-header">
+    <h2>Programming Language Roam: Isomorphism Lens
+    </h2>
+  </header>
+  <section class="entry-content">
+    <p>isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。
+这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。
+定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:
+ A lens from type a to b is a bijection between a and a pair of b and some residual r.
+ 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分
+简单解释下:
+  设类型 a 为一个集合，集合内各个元素为其字段
+  b 为 a 中的一个字段...</p>
+  </section>
+  <footer class="entry-footer"><span title='2022-05-04 17:00:00 +0800 CST'>May 4, 2022</span>&nbsp;·&nbsp;firest</footer>
+  <a class="entry-link" aria-label="post link to Programming Language Roam: Isomorphism Lens" href="https://lafirest.github.io/posts/isomorphism_lens/"></a>
+</article>
+
+<article class="post-entry tag-entry"> 
+  <header class="entry-header">
     <h2>Programming Language Roam: Van Laarhoven lens
     </h2>
   </header>

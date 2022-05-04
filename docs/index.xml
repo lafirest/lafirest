@@ -6,7 +6,23 @@
     <description>Recent content on Cogito, ergo sum</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Wed, 20 Apr 2022 23:13:00 +0800</lastBuildDate><atom:link href="https://lafirest.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 04 May 2022 17:00:00 +0800</lastBuildDate><atom:link href="https://lafirest.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Programming Language Roam: Isomorphism Lens</title>
+      <link>https://lafirest.github.io/posts/isomorphism_lens/</link>
+      <pubDate>Wed, 04 May 2022 17:00:00 +0800</pubDate>
+      
+      <guid>https://lafirest.github.io/posts/isomorphism_lens/</guid>
+      <description>isomorphism lens 是 Twan van Laarhoven 继 「Van Laarhoven Lens」后发明的一种新的 lens 实现。
+这种实现更加简洁、更符合直觉，所以易于理解，在部分情况下比前者更加高效，但大多数场景下可能没有前者使用方便。
+定义 isomorphism lens 的实现思想十分富有创意，他将 lens 抽象定义为:
+ A lens from type a to b is a bijection between a and a pair of b and some residual r.
+ 翻译过来就是: 一个 a 到 b 的 lens 是 a 到 (b, r) 的双射，其中 r 为 a 中除去 b 后的剩余部分
+简单解释下:
+  设类型 a 为一个集合，集合内各个元素为其字段
+  b 为 a 中的一个字段</description>
+    </item>
+    
     <item>
       <title>Programming Language Roam: Van Laarhoven lens</title>
       <link>https://lafirest.github.io/posts/van_laarhoven_lens/</link>
