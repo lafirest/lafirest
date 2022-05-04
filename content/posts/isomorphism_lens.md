@@ -60,13 +60,13 @@ type Lens<'a, 'b, 'r> = Lens of ISO<'a, 'b * 'r>
 let get (Lens iso) = fst iso >> fst
 ```
 
-get 的实现比较简单，取出 ISO 结构中的 (a -&gt; b) 然后 和 fst 函数复合就可以了
+get 的实现比较简单，取出 ISO 结构中的 a -&gt; (b, r) 然后 和 fst 函数复合就可以了
 
 更加详细易于理解的代码如下:
 
 ```fsharp
 let get (Lens iso) =
-    let f = fst iso      // 取出元组中的 a -> b 部分，绑定到变量 f 上
+    let f = fst iso      // 取出元组中的 a -> (b, r) 部分，绑定到变量 f 上
     fun a ->             // 返回 getter 函数, getter : a -> b
         let pair = f a   // 将 a 应用到函数 f 上
         fst pair         // 从 (b, r) 中取出 b
